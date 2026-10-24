@@ -30,7 +30,7 @@ export function Loading({ step, note, failure }: { step: number; note: string; f
         <>
           <p role="status">{STEPS[step - 1]}</p>
           <div className={styles.loadingBar}>
-            <div style={{ width: `${(step / STEPS.length) * 100}%` }} />
+            <div style={{ transform: `scaleX(${step / STEPS.length})` }} />
           </div>
           {note && <p className={styles.label}>{note}</p>}
         </>

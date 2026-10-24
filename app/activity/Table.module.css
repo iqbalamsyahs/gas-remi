@@ -54,7 +54,8 @@
 .loadingBar > div {
   height: 100%;
   background: #ffc107;
-  transition: width 0.4s ease;
+  transform-origin: left;
+  transition: transform 0.4s ease;
 }
 
 .loadingDetail {
