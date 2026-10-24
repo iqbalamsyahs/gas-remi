@@ -175,7 +175,8 @@
 }
 
 .deckReady {
-  box-shadow: 3px 3px 0 #163a8f, 6px 6px 0 #10307a, 0 0 0 3px #ffc107, 0 0 18px #ffc107;
+  outline: 3px solid #ffc107;
+  box-shadow: 3px 3px 0 #163a8f, 6px 6px 0 #10307a, 0 0 18px #ffc107;
 }
 
 .deckCount {
@@ -201,20 +202,18 @@
 }
 
 /* Kartu yang baru masuk ke tangan di giliran ini. */
-.card.fresh {
-  box-shadow: 0 0 0 3px #f59e0b, 0 0 12px rgb(245 158 11 / 0.8);
-}
-
 .freshTag {
   position: absolute;
-  top: -8px;
-  right: -6px;
-  padding: 1px 5px;
-  border-radius: 6px;
-  background: #f59e0b;
-  color: #212529;
-  font-size: 0.65rem;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.6rem;
   font-weight: 700;
+  line-height: 1.4;
 }
 
 .settings {
