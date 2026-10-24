@@ -79,7 +79,7 @@ function CardFace({
   return (
     <button
       type="button"
-      className={`${styles.card} ${red ? styles.red : ""} ${selected ? styles.selected : ""} ${fresh ? styles.fresh : ""}`}
+      className={`${styles.card} ${red ? styles.red : ""} ${selected ? styles.selected : ""}`}
       onClick={onClick}
       disabled={disabled}
       data-card-id={card.id}
@@ -189,7 +189,7 @@ export function Table({ view, error, onIntent }: TableProps) {
   const playable = board !== null && (view.status === "opening" || view.status === "playing") && myTurn;
 
   // Kartu yang baru masuk ke tangan selama giliranmu (dari cangkulan atau buangan), ditandai sampai giliran selesai.
-  // Tangan yang diganti seluruhnya (ronde baru dibagikan) tidak ditandai.
+  // Tangan yang diganti seluruhnya (ronde baru dibagikan) dan kartu di pembukaan tidak ditandai.
   const [freshIds, setFreshIds] = useState<string[]>([]);
   const [prevHand, setPrevHand] = useState(() => view.hand.map((card) => card.id));
   const handKey = view.hand.map((card) => card.id);
@@ -197,7 +197,7 @@ export function Table({ view, error, onIntent }: TableProps) {
     setPrevHand(handKey);
     const added = handKey.filter((id) => !prevHand.includes(id));
     const kept = freshIds.filter((id) => handKey.includes(id));
-    setFreshIds(myTurn && added.length < handKey.length ? [...kept, ...added] : []);
+    setFreshIds(myTurn && !inOpening && added.length < handKey.length ? [...kept, ...added] : []);
   } else if (!myTurn && freshIds.length > 0) {
     setFreshIds([]);
   }
@@ -372,7 +372,9 @@ export function Table({ view, error, onIntent }: TableProps) {
         </div>
       )}
       <header className={styles.header}>
-        <div>Ronde {view.rounds}</div>
+        <div>
+          Ronde {view.rounds} · Target {view.target}
+        </div>
         <div className={styles.totals}>
           {view.seats.map((_, seat) => (
             <span key={seat} className={styles.playerRow + (seat === view.you ? " " + styles.me : "")}>
@@ -385,20 +387,20 @@ export function Table({ view, error, onIntent }: TableProps) {
       </header>
 
       <div className={styles.toolbar}>
-        <button type="button" className={styles.tool} onClick={() => setPanel("target")}>
-          🎯 Target {view.target}
+        <button type="button" className={styles.tool} aria-label="Target poin" title="Target poin" onClick={() => setPanel("target")}>
+          🎯
         </button>
         {view.roundDetail !== null && (
-          <button type="button" className={styles.tool} onClick={() => setPanel("result")}>
-            Hasil ronde
+          <button type="button" className={styles.tool} aria-label="Hasil ronde" title="Hasil ronde" onClick={() => setPanel("result")}>
+            📊
           </button>
         )}
         {view.history.length > 0 && (
-          <button type="button" className={styles.tool} onClick={() => setPanel("history")}>
-            Riwayat poin
+          <button type="button" className={styles.tool} aria-label="Riwayat poin" title="Riwayat poin" onClick={() => setPanel("history")}>
+            📜
           </button>
         )}
-        <button type="button" className={styles.tool} aria-label="Pengaturan" onClick={() => setPanel("settings")}>
+        <button type="button" className={styles.tool} aria-label="Pengaturan" title="Pengaturan" onClick={() => setPanel("settings")}>
           ⚙️
         </button>
       </div>
@@ -664,9 +666,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       )}
       {panel === "result" && view.roundDetail !== null && (
         <Modal title="Hasil ronde terakhir" onClose={() => setPanel(null)}>
-                {(
         <section className={styles.detail}>
-          <div className={styles.label}>Hasil ronde terakhir</div>
           <div className={styles.resultGrid}>
             {view.roundDetail.map((detail, seat) => (
               <div key={seat} className={styles.resultSeat}>
@@ -707,14 +707,12 @@ export function Table({ view, error, onIntent }: TableProps) {
             ))}
           </div>
         </section>
-      )}
         </Modal>
       )}
       {panel === "history" && view.history.length > 0 && (
         <Modal title="Riwayat poin" onClose={() => setPanel(null)}>
-                {(
         <section className={styles.detail}>
-          <div className={styles.label}>Riwayat poin (total setelah ronde)</div>
+          <div className={styles.label}>Total poin setelah tiap ronde</div>
           <table className={styles.history}>
             <thead>
               <tr>
@@ -738,7 +736,6 @@ export function Table({ view, error, onIntent }: TableProps) {
             </tbody>
           </table>
         </section>
-      )}
         </Modal>
       )}
       {panel === "target" && (
