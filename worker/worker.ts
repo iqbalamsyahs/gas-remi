@@ -149,11 +149,11 @@ export class Table extends DurableObject<Env> {
     const loaded = await this.load();
     if (loaded === null) return ws.send(JSON.stringify({ type: "error", error: "ROOM_NOT_FOUND" }));
     const seat = loaded.seatOf(userId);
-    // Penonton hanya boleh ikut main.
-    if (seat === null && intent.type !== "sit") return ws.send(JSON.stringify({ type: "error", error: "SPECTATOR" }));
+    // Penonton hanya boleh ikut main, atau reset kalau tidak ada manusia di meja (dicek di bawah).
+    if (seat === null && intent.type !== "sit" && intent.type !== "reset") return ws.send(JSON.stringify({ type: "error", error: "SPECTATOR" }));
     // Reset membuat ruang baru dengan kursi yang sama (termasuk bot dan pemain yang sudah masuk).
     if (intent.type === "reset") {
-      if (seat !== loaded.firstHumanSeat()) return ws.send(JSON.stringify({ type: "error", error: "RESET_NOT_ALLOWED" }));
+      if (!loaded.canReset(seat)) return ws.send(JSON.stringify({ type: "error", error: "RESET_NOT_ALLOWED" }));
       const next = createRoom([...loaded.seats], ROOM_OPTIONS);
       next.setProfiles(loaded.profiles);
       return this.commit(next);

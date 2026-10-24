@@ -65,18 +65,21 @@ function CardFace({
   selected,
   onClick,
   disabled,
+  fresh,
   ...drag
 }: {
   card: Card;
   selected?: boolean;
   onClick?: () => void;
   disabled?: boolean;
+  // Kartu yang baru masuk ke tangan di giliran ini.
+  fresh?: boolean;
 } & DragProps) {
   const red = card.suit === "H" || card.suit === "D";
   return (
     <button
       type="button"
-      className={`${styles.card} ${red ? styles.red : ""} ${selected ? styles.selected : ""}`}
+      className={`${styles.card} ${red ? styles.red : ""} ${selected ? styles.selected : ""} ${fresh ? styles.fresh : ""}`}
       onClick={onClick}
       disabled={disabled}
       data-card-id={card.id}
@@ -88,6 +91,7 @@ function CardFace({
         {SUIT_SYMBOL[card.suit]}
       </span>
       <span className={styles.center}>{SUIT_SYMBOL[card.suit]}</span>
+      {fresh && <span className={styles.freshTag}>baru</span>}
       <span className={`${styles.corner} ${styles.cornerBottom}`}>
         {card.rank}
         <br />
@@ -168,7 +172,7 @@ export function Table({ view, error, onIntent }: TableProps) {
   // Susunan kombinasi saat fase penyusunan. Null berarti belum diubah, jadi pakai usulan server.
   const [edit, setEdit] = useState<{ round: number; groups: string[][] } | null>(null);
   const [targetInput, setTargetInput] = useState("");
-  const [panel, setPanel] = useState<"result" | "history" | null>(null);
+  const [panel, setPanel] = useState<"result" | "history" | "target" | "settings" | null>(null);
   // Modal hasil ronde terbuka otomatis saat ronde baru selesai (jumlah ronde bertambah).
   const [seenRounds, setSeenRounds] = useState(view.rounds);
   if (view.rounds !== seenRounds) {
@@ -183,6 +187,20 @@ export function Table({ view, error, onIntent }: TableProps) {
   const discardPhase = board?.phase === "discard";
   // Pembukaan memakai status "opening", permainan memakai "playing". Keduanya boleh bertindak saat gilirannya.
   const playable = board !== null && (view.status === "opening" || view.status === "playing") && myTurn;
+
+  // Kartu yang baru masuk ke tangan selama giliranmu (dari cangkulan atau buangan), ditandai sampai giliran selesai.
+  // Tangan yang diganti seluruhnya (ronde baru dibagikan) tidak ditandai.
+  const [freshIds, setFreshIds] = useState<string[]>([]);
+  const [prevHand, setPrevHand] = useState(() => view.hand.map((card) => card.id));
+  const handKey = view.hand.map((card) => card.id);
+  if (handKey.join() !== prevHand.join()) {
+    setPrevHand(handKey);
+    const added = handKey.filter((id) => !prevHand.includes(id));
+    const kept = freshIds.filter((id) => handKey.includes(id));
+    setFreshIds(myTurn && added.length < handKey.length ? [...kept, ...added] : []);
+  } else if (!myTurn && freshIds.length > 0) {
+    setFreshIds([]);
+  }
 
   // Suara dibunyikan dari perubahan tampilan: giliran, cekih, joker, ronde selesai, dan gerakan kartu.
   const [muted, setMutedState] = useState(isMuted);
@@ -314,11 +332,15 @@ export function Table({ view, error, onIntent }: TableProps) {
     }
     setConfirming(null);
     clearSelection();
+    setPanel(null);
     onIntent({ type: kind });
   }
 
   // Kartu yang bisa dipakai untuk menurunkan seri murni atau membuang.
   const canDiscard = discardPhase && playable && selected.length === 1;
+  // Mengambil dari cangkulan: di pembukaan saat tangan masih 7 kartu, atau di awal giliran main.
+  const canDraw =
+    playable && (board?.stockCount ?? 0) > 0 && (drawPhase || (inOpening && view.hand.length === 7));
   const canLayDown = (drawPhase || discardPhase) && playable && selected.length >= 3;
   const canPickup = drawPhase && playable && pickupTarget !== null && selected.length >= 2;
 
@@ -343,27 +365,14 @@ export function Table({ view, error, onIntent }: TableProps) {
               </div>
             )}
             <div className={styles.label}>Ingat baik-baik, joker tidak ditampilkan lagi.</div>
-            <button type="button" onClick={() => setJokerLeft(0)}>
+            <button type="button" className={styles.stock} onClick={() => setJokerLeft(0)}>
               OK ({jokerLeft})
             </button>
           </div>
         </div>
       )}
       <header className={styles.header}>
-        <div>
-          Target {view.target} · Ronde {view.rounds}{" "}
-          <button
-            type="button"
-            className={styles.tool}
-            aria-label={muted ? "Nyalakan suara" : "Matikan suara"}
-            onClick={() => {
-              setMuted(!muted);
-              setMutedState(!muted);
-            }}
-          >
-            {muted ? "🔇" : "🔊"}
-          </button>
-        </div>
+        <div>Ronde {view.rounds}</div>
         <div className={styles.totals}>
           {view.seats.map((_, seat) => (
             <span key={seat} className={styles.playerRow + (seat === view.you ? " " + styles.me : "")}>
@@ -375,59 +384,24 @@ export function Table({ view, error, onIntent }: TableProps) {
         </div>
       </header>
 
-      {(view.roundDetail !== null || view.history.length > 0) && (
-        <div className={styles.toolbar}>
-          {view.roundDetail !== null && (
-            <button type="button" className={styles.tool} onClick={() => setPanel("result")}>
-              Hasil ronde
-            </button>
-          )}
-          {view.history.length > 0 && (
-            <button type="button" className={styles.tool} onClick={() => setPanel("history")}>
-              Riwayat poin
-            </button>
-          )}
-        </div>
-      )}
-      {!spectator && view.rounds === 0 && view.status !== "finished" && view.status !== "cancelled" && (
-        <section className={styles.targetCard}>
-          <div className={styles.label}>Target poin: {view.target}</div>
-          <div className={styles.presets}>
-            {TARGET_PRESETS.map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                className={preset === view.target ? styles.presetActive : styles.preset}
-                onClick={() => onIntent({ type: "set_target", target: preset })}
-              >
-                {preset}
-              </button>
-            ))}
-          </div>
-          <form
-            className={styles.target}
-            onSubmit={(event) => {
-              event.preventDefault();
-              onIntent({ type: "set_target", target: Number(targetInput) });
-              setTargetInput("");
-            }}
-          >
-            <input
-              type="number"
-              min={100}
-              max={5000}
-              step={50}
-              value={targetInput}
-              placeholder="Lainnya"
-              aria-label="Target poin lainnya"
-              onChange={(event) => setTargetInput(event.target.value)}
-            />
-            <button type="submit" disabled={targetInput === ""}>
-              Atur
-            </button>
-          </form>
-        </section>
-      )}
+      <div className={styles.toolbar}>
+        <button type="button" className={styles.tool} onClick={() => setPanel("target")}>
+          🎯 Target {view.target}
+        </button>
+        {view.roundDetail !== null && (
+          <button type="button" className={styles.tool} onClick={() => setPanel("result")}>
+            Hasil ronde
+          </button>
+        )}
+        {view.history.length > 0 && (
+          <button type="button" className={styles.tool} onClick={() => setPanel("history")}>
+            Riwayat poin
+          </button>
+        )}
+        <button type="button" className={styles.tool} aria-label="Pengaturan" onClick={() => setPanel("settings")}>
+          ⚙️
+        </button>
+      </div>
       {view.status === "paused" && <p className={styles.notice}>Permainan dijeda, menunggu pemain kembali.</p>}
       {view.status === "cancelled" && <p className={styles.notice}>Sesi dibatalkan karena pemain tidak kembali.</p>}
       {view.status === "finished" && (
@@ -487,15 +461,17 @@ export function Table({ view, error, onIntent }: TableProps) {
 
       <section className={styles.middle}>
         <div className={styles.pile}>
-          <div className={styles.label}>Cangkulan: {board?.stockCount ?? 0}</div>
+          <div className={styles.label}>Cangkulan</div>
           <button
             type="button"
-            className={styles.stock}
-            disabled={!playable || !drawPhase}
-            onClick={() => send({ type: "draw_stock" })}
+            className={`${styles.deck} ${canDraw ? styles.deckReady : ""}`}
+            disabled={!canDraw}
+            aria-label="Ambil kartu dari cangkulan"
+            onClick={() => send(inOpening ? { type: "opening_draw" } : { type: "draw_stock" })}
           >
-            Ambil
+            <span className={styles.deckCount}>{board?.stockCount ?? 0}</span>
           </button>
+          {canDraw && <div className={styles.label}>Klik untuk ambil</div>}
         </div>
 
         <div className={styles.discard}>
@@ -524,11 +500,6 @@ export function Table({ view, error, onIntent }: TableProps) {
       </section>
 
       <section className={styles.actions}>
-        {inOpening && playable && view.hand.length === 7 && (
-          <button type="button" onClick={() => send({ type: "opening_draw" })}>
-            Ambil dari cangkulan
-          </button>
-        )}
         {inOpening && playable && view.hand.length === 8 && (
           <button
             type="button"
@@ -634,6 +605,7 @@ export function Table({ view, error, onIntent }: TableProps) {
                 key={card.id}
                 card={card}
                 selected={selected.includes(card.id)}
+                fresh={freshIds.includes(card.id)}
                 onClick={() => {
                   if (justDragged.current) {
                     justDragged.current = false;
@@ -690,16 +662,6 @@ export function Table({ view, error, onIntent }: TableProps) {
           ))}
         </section>
       )}
-      <section className={styles.actions}>
-        {!spectator && (
-          <button type="button" className={styles.danger} onClick={() => confirmThen("leave")}>
-            {confirming === "leave" ? "Klik lagi untuk keluar dari meja" : "Keluar dari meja"}
-          </button>
-        )}
-        <button type="button" className={styles.reset} onClick={() => confirmThen("reset")} disabled={!view.canReset}>
-          {!view.canReset ? "Reset game (hanya pemain manusia pertama)" : confirming === "reset" ? "Klik lagi untuk reset game" : "Reset game"}
-        </button>
-      </section>
       {panel === "result" && view.roundDetail !== null && (
         <Modal title="Hasil ronde terakhir" onClose={() => setPanel(null)}>
                 {(
@@ -777,6 +739,83 @@ export function Table({ view, error, onIntent }: TableProps) {
           </table>
         </section>
       )}
+        </Modal>
+      )}
+      {panel === "target" && (
+        <Modal title="Target poin" onClose={() => setPanel(null)}>
+          <section className={styles.targetCard}>
+            <div className={styles.label}>Target poin: {view.target}</div>
+            {spectator || view.rounds > 0 || view.status === "finished" || view.status === "cancelled" ? (
+              <div className={styles.label}>
+                {spectator ? "Hanya pemain yang bisa mengubah target." : "Target terkunci setelah ronde pertama selesai."}
+              </div>
+            ) : (
+              <>
+                <div className={styles.presets}>
+                  {TARGET_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      className={preset === view.target ? styles.presetActive : styles.preset}
+                      onClick={() => onIntent({ type: "set_target", target: preset })}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+                <form
+                  className={styles.target}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    onIntent({ type: "set_target", target: Number(targetInput) });
+                    setTargetInput("");
+                  }}
+                >
+                  <input
+                    type="number"
+                    min={100}
+                    max={5000}
+                    step={50}
+                    value={targetInput}
+                    placeholder="Lainnya"
+                    aria-label="Target poin lainnya"
+                    onChange={(event) => setTargetInput(event.target.value)}
+                  />
+                  <button type="submit" disabled={targetInput === ""}>
+                    Atur
+                  </button>
+                </form>
+              </>
+            )}
+          </section>
+        </Modal>
+      )}
+      {panel === "settings" && (
+        <Modal title="Pengaturan" onClose={() => setPanel(null)}>
+          <div className={`${styles.actions} ${styles.settings}`}>
+            <button
+              type="button"
+              className={styles.stock}
+              onClick={() => {
+                setMuted(!muted);
+                setMutedState(!muted);
+              }}
+            >
+              {muted ? "🔇 Suara mati" : "🔊 Suara nyala"}
+            </button>
+            {!spectator && (
+              <button type="button" className={styles.danger} onClick={() => confirmThen("leave")}>
+                {confirming === "leave" ? "Klik lagi untuk keluar dari meja" : "Keluar dari meja"}
+              </button>
+            )}
+            {view.canReset ? (
+              <button type="button" className={styles.reset} onClick={() => confirmThen("reset")}>
+                {confirming === "reset" ? "Klik lagi untuk reset game" : "Reset game"}
+              </button>
+            ) : (
+              <div className={styles.label}>Reset game hanya bisa dilakukan pemain manusia di kursi paling awal.</div>
+            )}
+          </div>
         </Modal>
       )}
     </main>
