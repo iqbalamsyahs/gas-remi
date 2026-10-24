@@ -1,9 +1,87 @@
-.centered {
-  display: grid;
-  place-items: center;
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
   min-height: 100vh;
   padding: 16px;
   text-align: center;
+  background: #0f5132;
+  color: #f8f9fa;
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+.loadingFan {
+  position: relative;
+  width: 140px;
+  height: 100px;
+  transform-origin: 50% 100%;
+  animation: loadingSway 2.4s ease-in-out infinite;
+}
+
+.loadingCard {
+  position: absolute;
+  left: calc(50% - 28px);
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 80px;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font-size: 28px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transform-origin: 50% 100%;
+  transform: rotate(calc((var(--i) - 1.5) * 14deg));
+}
+
+.loadingTitle {
+  margin: 0;
+  font-size: 2.2rem;
+  letter-spacing: 0.04em;
+}
+
+.loadingBar {
+  width: min(240px, 80vw);
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.loadingBar > div {
+  height: 100%;
+  background: #ffc107;
+  transition: width 0.4s ease;
+}
+
+.loadingDetail {
+  max-width: min(480px, 90vw);
+  font-size: 0.8rem;
+  text-align: left;
+  word-break: break-word;
+  opacity: 0.8;
+}
+
+@keyframes loadingSway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingFan {
+    animation: none;
+  }
+  .loadingBar > div {
+    transition: none;
+  }
 }
 
 .page {

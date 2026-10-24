@@ -6,14 +6,17 @@ import type { PlayerView } from "../../server/view";
 import { connectDiscord } from "../../src/client/discord";
 import { messageForError } from "../../src/client/messages";
 import { connectRoom, type RoomConnection } from "../../src/client/realtime";
+import { Loading } from "./Loading";
 import { Table } from "./Table";
-import styles from "./Table.module.css";
 
 
 export default function ActivityPage() {
   const [view, setView] = useState<PlayerView | null>(null);
-  const [status, setStatus] = useState("Menghubungkan ke Discord...");
+  const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Layar loading: langkah masuk (1–3) dan detail teknis kalau gagal terhubung ke Discord.
+  const [step, setStep] = useState(1);
+  const [failure, setFailure] = useState<string | null>(null);
   const connection = useRef<RoomConnection | null>(null);
 
   useEffect(() => {
@@ -22,12 +25,13 @@ export default function ActivityPage() {
     async function start() {
       let session;
       try {
-        session = await connectDiscord(setStatus);
+        session = await connectDiscord(setStep);
       } catch (err) {
-        if (!cancelled) setStatus(err instanceof Error ? err.message : "Gagal terhubung ke Discord.");
+        if (!cancelled) setFailure(err instanceof Error ? err.message : "Gagal terhubung ke Discord.");
         return;
       }
       if (cancelled) return;
+      setStep(3);
 
       connection.current = connectRoom(session, {
         onView: (next) => {
@@ -47,7 +51,7 @@ export default function ActivityPage() {
   }, []);
 
   if (view === null) {
-    return <main className={styles.centered}>{error ?? status}</main>;
+    return <Loading step={step} note={error ?? status} failure={failure} />;
   }
 
   function onIntent(intent: Intent) {
