@@ -1,4 +1,5 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { audioBlocked, playOpening, resumeAudio } from "../../src/client/sound";
 import styles from "./Table.module.css";
 
 // Langkah masuk yang ditampilkan ke pemain. Detail teknisnya hanya muncul kalau gagal.
@@ -12,6 +13,24 @@ const SUITS = [
 
 // Layar masuk sampai tampilan meja pertama datang dari server. step 1–3, failure berisi detail teknis kalau gagal.
 export function Loading({ step, note, failure }: { step: number; note: string; failure: string | null }) {
+  // Jingle opening diputar saat loading tampil dan dipudarkan saat meja tampil (komponen ini hilang).
+  // Kalau browser menahan suara, klik pertama di mana pun (atau tombol musik) memutarnya.
+  const [blocked, setBlocked] = useState(false);
+  useEffect(() => {
+    const stop = playOpening();
+    const check = setTimeout(() => setBlocked(audioBlocked()), 300);
+    const unlock = () => {
+      resumeAudio();
+      setBlocked(false);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    return () => {
+      stop();
+      clearTimeout(check);
+      window.removeEventListener("pointerdown", unlock);
+    };
+  }, []);
+
   return (
     <main className={styles.loading}>
       <div className={styles.loadingFan} aria-hidden>
@@ -26,6 +45,11 @@ export function Loading({ step, note, failure }: { step: number; note: string; f
         ))}
       </div>
       <h1 className={styles.loadingTitle}>Gas Remi</h1>
+      {blocked && (
+        <button type="button" className={styles.tool}>
+          🔊 Putar musik
+        </button>
+      )}
       {failure === null ? (
         <>
           <p role="status">{STEPS[step - 1]}</p>

@@ -85,14 +85,49 @@ export function setMuted(muted: boolean): void {
   }
 }
 
-// Nada dibuat langsung dengan Web Audio, tanpa file audio. Browser baru mengizinkan suara setelah pemain klik halaman.
-export function playSound(sound: Sound): void {
-  if (isMuted() || typeof AudioContext === "undefined") return;
+// Jingle opening (sekitar 4 detik): melodi dan bass dimainkan bersamaan.
+const OPENING_MELODY: Tone[] = [
+  { freq: 392, ms: 150 },
+  { freq: 523, ms: 150 },
+  { freq: 659, ms: 150 },
+  { freq: 784, ms: 150 },
+  { freq: 0, ms: 150 },
+  { freq: 659, ms: 150 },
+  { freq: 784, ms: 450 },
+  { freq: 880, ms: 150 },
+  { freq: 784, ms: 150 },
+  { freq: 698, ms: 150 },
+  { freq: 659, ms: 150 },
+  { freq: 587, ms: 300 },
+  { freq: 392, ms: 300 },
+  { freq: 523, ms: 150 },
+  { freq: 659, ms: 150 },
+  { freq: 784, ms: 150 },
+  { freq: 1047, ms: 300 },
+  { freq: 988, ms: 150 },
+  { freq: 1047, ms: 600 },
+].map((tone) => ({ ...tone, type: "triangle" as const, gain: 0.15 }));
+
+const OPENING_BASS: Tone[] = [
+  { freq: 131, ms: 600 },
+  { freq: 196, ms: 750 },
+  { freq: 175, ms: 600 },
+  { freq: 196, ms: 600 },
+  { freq: 131, ms: 750 },
+  { freq: 196, ms: 150 },
+  { freq: 131, ms: 600 },
+].map((tone) => ({ ...tone, gain: 0.12 }));
+
+function audio(): AudioContext | null {
+  if (typeof AudioContext === "undefined") return null;
   context ??= new AudioContext();
-  const ctx = context;
-  if (ctx.state === "suspended") void ctx.resume();
-  let at = ctx.currentTime;
-  for (const tone of TONES[sound]) {
+  if (context.state === "suspended") void context.resume().catch(() => {});
+  return context;
+}
+
+// Menjadwalkan nada berurutan mulai dari waktu at, ke node tujuan.
+function schedule(ctx: AudioContext, tones: Tone[], at: number, destination: AudioNode): void {
+  for (const tone of tones) {
     const end = at + tone.ms / 1000;
     if (tone.freq > 0) {
       const osc = ctx.createOscillator();
@@ -103,10 +138,41 @@ export function playSound(sound: Sound): void {
       gain.gain.setValueAtTime(0.0001, at);
       gain.gain.exponentialRampToValueAtTime(tone.gain ?? 0.2, at + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.0001, end);
-      osc.connect(gain).connect(ctx.destination);
+      osc.connect(gain).connect(destination);
       osc.start(at);
       osc.stop(end);
     }
     at = end;
   }
+}
+
+// Nada dibuat langsung dengan Web Audio, tanpa file audio. Browser baru mengizinkan suara setelah pemain klik halaman.
+export function playSound(sound: Sound): void {
+  if (isMuted()) return;
+  const ctx = audio();
+  if (ctx !== null) schedule(ctx, TONES[sound], ctx.currentTime, ctx.destination);
+}
+
+// Browser menahan suara sampai pemain klik halaman. Nada yang sudah dijadwalkan baru terdengar setelah resumeAudio.
+export function audioBlocked(): boolean {
+  return context !== null && context.state !== "running";
+}
+
+export function resumeAudio(): void {
+  void context?.resume().catch(() => {});
+}
+
+// Memutar jingle opening sekali. Mengembalikan fungsi untuk memudarkan dan menghentikannya (dipanggil saat meja tampil).
+export function playOpening(): () => void {
+  if (isMuted()) return () => {};
+  const ctx = audio();
+  if (ctx === null) return () => {};
+  const master = ctx.createGain();
+  master.connect(ctx.destination);
+  schedule(ctx, OPENING_MELODY, ctx.currentTime, master);
+  schedule(ctx, OPENING_BASS, ctx.currentTime, master);
+  return () => {
+    master.gain.setTargetAtTime(0, ctx.currentTime, 0.2);
+    setTimeout(() => master.disconnect(), 1000);
+  };
 }
