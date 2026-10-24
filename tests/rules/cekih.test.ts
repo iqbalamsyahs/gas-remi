@@ -72,9 +72,17 @@ test("hand with a joker one 9 short can call cekih by discarding its own leftove
   expect(canCallCekih(hand, "8")).toBe(true);
 });
 
-test("cekih can target the player right after the caller", () => {
-  // A (0) bisa cekih ke B (1), pemain tepat setelahnya. B (1) juga bisa cekih ke C (2).
-  const start = round({ hands: [READY, READY, [], []] });
-  expect(callCekih(start, 0, 1).cekih).toEqual([{ caller: 0, target: 1 }]);
-  expect(callCekih(start, 1, 2).cekih).toEqual([{ caller: 1, target: 2 }]);
+test("cekih only targets the previous two players", () => {
+  // A (0): pemain sebelumnya D (3) dan sebelumnya lagi C (2). B (1) ada sesudah A, jadi tidak boleh.
+  const start = round({ hands: [READY, [], [], []] });
+  expect(callCekih(start, 0, 3).cekih).toEqual([{ caller: 0, target: 3 }]);
+  expect(callCekih(start, 0, 2).cekih).toEqual([{ caller: 0, target: 2 }]);
+  expect(() => callCekih(start, 0, 1)).toThrow("CEKIH_TARGET_NOT_ALLOWED");
+});
+
+test("hand one card short but without any pure seri cannot call cekih", () => {
+  // 8-8-8, 9-9-9, K: satu K lagi membuat tangan bisa dibentuk, tetapi tutup wajib punya seri murni.
+  const hand = ["8S", "8C", "8D", "9S", "9C", "9D", "KS"].map(c);
+  expect(canCallCekih(hand, null, false)).toBe(false);
+  expect(canCallCekih(hand, null, true)).toBe(true);
 });

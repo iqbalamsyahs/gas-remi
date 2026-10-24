@@ -3,7 +3,9 @@ const MESSAGES: Record<string, string> = {
   // Koneksi dan sesi
   NOT_ENOUGH_PLAYERS: "Menunggu 4 pemain di Activity ini...",
   NOT_SEATED: "Kamu tidak terdaftar sebagai pemain di sesi ini.",
-  TOO_MANY_PLAYERS: "Activity ini sudah penuh, maksimal 4 pemain.",
+  SPECTATOR: "Kamu sedang menonton. Klik \"Ikut main\" kalau ada kursi.",
+  NO_SEAT: "Tidak ada kursi yang bisa diisi sekarang.",
+  ALREADY_SEATED: "Kamu sudah duduk di meja.",
   INVALID_TOKEN: "Login Discord tidak valid. Buka ulang Activity.",
   INSTANCE_NOT_FOUND: "Sesi Activity tidak ditemukan. Buka ulang Activity dari voice channel.",
   INSTANCE_MISMATCH: "Kamu membuka sesi yang berbeda. Buka ulang Activity.",
@@ -33,7 +35,7 @@ const MESSAGES: Record<string, string> = {
 
   // Penyusunan dan skor
   INVALID_ARRANGEMENT: "Susunan kombinasi tidak sah. Periksa lagi kombinasinya.",
-  JOKER_MELD_NEEDS_PURE_SERI: "Kombinasi yang memakai joker hanya dihitung plus kalau kamu punya seri murni.",
+  MELD_NEEDS_PURE_SERI: "Kombinasi hanya dihitung plus kalau kamu punya seri murni (sudah diturunkan atau ada di tangan).",
   ALREADY_CONFIRMED: "Kamu sudah konfirmasi susunan.",
 
   // Cekih
@@ -41,9 +43,10 @@ const MESSAGES: Record<string, string> = {
   CEKIH_NOT_ALLOWED: "Belum bisa menyebut cekih. Tanganmu belum tinggal satu kartu lagi untuk tutup.",
   CEKIH_NOT_FOUND: "Tidak ada cekih ke pemain itu yang bisa dibatalkan.",
   CEKIH_ALREADY_ACTIVE: "Cekih ke pemain itu sudah aktif.",
+  CEKIH_TARGET_NOT_ALLOWED: "Cekih hanya bisa ke pemain sebelummu dan sebelumnya lagi.",
 
   // Reset
-  RESET_NOT_ALLOWED: "Hanya pemain pertama yang bisa mereset game.",
+  RESET_NOT_ALLOWED: "Hanya pemain manusia di kursi paling awal yang bisa mereset game.",
 
   // Target
   TARGET_LOCKED: "Target tidak bisa diubah setelah ronde pertama selesai.",

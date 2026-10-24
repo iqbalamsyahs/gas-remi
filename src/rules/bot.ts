@@ -56,7 +56,7 @@ function layChoice(round: RoundState, seat: PlayerId): BotIntent | null {
 // Cekih ke pemain sebelumnya saat tangan sudah tinggal satu kartu lagi. Batalkan kalau syarat tidak lagi terpenuhi.
 function cekihChoice(round: RoundState, seat: PlayerId): BotIntent | null {
   const mine = round.cekih.filter((c) => c.caller === seat);
-  const ready = canCallCekih(round.hands[seat], round.jokerRank);
+  const ready = canCallCekih(round.hands[seat], round.jokerRank, round.laidPureSeri[seat]);
   if (mine.length > 0 && !ready) return { type: "cekih_batal", target: mine[0].target };
   if (mine.length === 0 && ready) return { type: "cekih", target: (seat + 3) % 4 };
   return null;

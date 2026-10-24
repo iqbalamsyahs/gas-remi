@@ -24,7 +24,7 @@ Pemain boleh menyebut cekih ke satu pemain lain, kapan saja di ronde, kalau tang
 
 Pemain tidak boleh menyebut cekih ke dirinya sendiri, dan tidak boleh menyebut cekih kalau syaratnya tidak terpenuhi.
 
-Pemain tercekih tidak harus pemain sebelumnya. Bisa pemain mana saja selain pemain cekih.
+Pemain tercekih hanya boleh pemain sebelumnya atau pemain sebelumnya lagi (revisi 24 Okt 2026). Tangan yang jadi juga harus punya seri murni, sama seperti syarat tutup.
 
 ### 2. Pembatalan
 

@@ -113,7 +113,8 @@ Ronde berakhir dengan salah satu dari dua cara: ada pemain yang closed, atau can
 
 **Cekih**
 
-- Pemain boleh menyebut cekih ke pemain lain kapan saja di ronde, saat tangannya tinggal satu kartu lagi untuk menutup. Cekih bisa dibatalkan kapan saja sampai ronde selesai.
+- Pemain boleh menyebut cekih kapan saja di ronde, saat tangannya tinggal satu kartu lagi untuk menutup (termasuk syarat punya seri murni). Cekih bisa dibatalkan kapan saja sampai ronde selesai.
+- Cekih hanya bisa ke pemain sebelumnya dan pemain sebelumnya lagi.
 - Cekih hanya memberi bonus dan hukuman jika penutupan adalah tutup biasa (pernah mengambil dari buangan) dan kartu yang diambil pada giliran penutupan termasuk kartu yang dibuang pemain tercekih.
 - Pemain penutup mendapat +10× nilai kartu penutup. Pemain tercekih mendapat −10× nilai kartu penutup.
 - Hanya cekih milik pemain penutup yang dihitung.
@@ -130,7 +131,7 @@ Ronde berakhir dengan salah satu dari dua cara: ada pemain yang closed, atau can
 4. Joker yang tersisa di tangan dan tidak jadi kombinasi dihitung **minus 10×** nilai kartunya.
 5. Tambahkan bonus closed (jika ada) dan kurangi penalti buang joker selama ronde.
 
-Kombinasi di tangan yang memakai joker hanya dihitung plus jika pemain punya seri murni, baik yang sudah diturunkan di ronde ini maupun yang ada di tangannya. Kalau belum, semua kartu dalam kombinasi joker itu dihitung minus. Kombinasi tanpa joker selalu dihitung plus. Seri murni tidak wajib diturunkan.
+Kombinasi di tangan (seri, tris, maupun yang memakai joker) hanya dihitung plus jika pemain punya seri murni, baik yang sudah diturunkan di ronde ini maupun yang ada di tangannya. Kalau tidak punya, semua kartu di tangan dihitung minus. Seri murni tidak wajib diturunkan.
 
 Skor ronde boleh bernilai minus.
 

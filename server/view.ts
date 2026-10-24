@@ -31,6 +31,7 @@ export function maskDiscard(cards: Card[], jokerRank: Rank | null): PublicCard[]
 
 export interface PublicBoard {
   jokerRank: Rank | null;
+  jokerCard: Card | null;
   stockCount: number;
   discard: { cards: PublicCard[]; closedIndex: number | null };
   table: Card[][][];
@@ -56,7 +57,12 @@ const BOT_AVATAR = "/bot-avatar.svg";
 export interface PlayerView {
   players: PlayerInfo[];
   status: RoomStatus;
-  you: PlayerId;
+  // Null untuk penonton: tidak punya tangan dan tidak bisa bertindak.
+  you: PlayerId | null;
+  // Penonton bisa ikut main (ada kursi kosong saat menunggu atau kursi bot).
+  canSit: boolean;
+  // Penerima ini boleh reset game (pemain manusia di kursi paling awal).
+  canReset: boolean;
   seats: string[];
   target: number;
   totals: number[];
@@ -85,7 +91,7 @@ function playerInfo(room: Room, seat: number): PlayerInfo {
   return { kind: "human", name: profile?.name ?? "Pemain", avatarUrl: profile?.avatarUrl ?? null };
 }
 
-export function viewFor(room: Room, seat: PlayerId): PlayerView {
+export function viewFor(room: Room, seat: PlayerId | null): PlayerView {
   const board = room.board();
   return {
     players: room.seats.map((_, i) => playerInfo(room, i)),
@@ -102,11 +108,12 @@ export function viewFor(room: Room, seat: PlayerId): PlayerView {
     revealed: room.status === "scoring" ? revealedCloser(board) : null,
     scoring:
       room.status === "scoring"
-        ? { confirmed: [...room.scoringConfirmed], mine: room.scoringArrangement?.[seat] ?? null }
+        ? { confirmed: [...room.scoringConfirmed], mine: seat === null ? null : room.scoringArrangement?.[seat] ?? null }
         : null,
     pausedSeat: room.pausedSeat,
     board: board && {
       jokerRank: board.jokerRank,
+      jokerCard: board.jokerCard,
       stockCount: board.stock.length,
       discard: { cards: maskDiscard(board.discard.cards, board.jokerRank), closedIndex: board.discard.closedIndex },
       table: board.table,
@@ -118,7 +125,9 @@ export function viewFor(room: Room, seat: PlayerId): PlayerView {
       result: board.result,
       cekih: board.cekih,
     },
-    hand: board ? board.hands[seat] : [],
+    hand: board && seat !== null ? board.hands[seat] : [],
+    canSit: room.canSit(),
+    canReset: seat !== null && seat === room.firstHumanSeat(),
     handCounts: board ? board.hands.map((hand) => hand.length) : [0, 0, 0, 0],
   };
 }

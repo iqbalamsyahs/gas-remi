@@ -19,9 +19,10 @@ interface Best extends Arrangement {
 }
 
 // Susunan tangan dengan nilai terbaik. Dipakai sebagai usulan awal dan untuk bot.
-// allowJokerMelds: kombinasi yang memakai joker hanya boleh plus kalau pemain sudah pernah menurunkan seri murni.
-export function handArrangement(hand: Card[], jokerRank: Rank | null, allowJokerMelds: boolean): Arrangement {
-  const best = bestFrom(hand, jokerRank, allowJokerMelds);
+// allowMelds: kombinasi di tangan hanya boleh plus kalau pemain punya seri murni. Kalau tidak, semua kartu jadi sampah.
+export function handArrangement(hand: Card[], jokerRank: Rank | null, allowMelds: boolean): Arrangement {
+  if (!allowMelds) return { melds: [], leftover: hand };
+  const best = bestFrom(hand, jokerRank);
   return { melds: best.melds, leftover: best.leftover };
 }
 
@@ -44,12 +45,17 @@ export function seatScore(state: RoundState, seat: number, arrangement: Arrangem
   const plus = arrangement.melds.reduce((sum, meld) => sum + meldValue(meld, state.jokerRank), 0);
   const minus = arrangement.leftover.reduce((sum, card) => sum + loneValue(card, state.jokerRank), 0);
   const bonus = state.result?.closedBy === seat ? state.result.bonus : 0;
-  return onTable + plus + minus + state.penalties[seat] + bonus;
+  return onTable + plus + minus + state.penalties[seat] + bonus + cekihPenaltyOf(state, seat);
+}
+
+// Hukuman cekih untuk pemain tercekih (negatif), atau 0.
+export function cekihPenaltyOf(state: RoundState, seat: number): number {
+  return state.result?.cekihTarget === seat ? state.result.cekihPenalty : 0;
 }
 
 export function scoreRound(state: RoundState): number[] {
   const arrangements = state.hands.map((hand, seat) =>
-    handArrangement(hand, state.jokerRank, canUseJokerMelds(hand, state.laidPureSeri[seat], state.jokerRank)),
+    handArrangement(hand, state.jokerRank, canUseMelds(hand, state.laidPureSeri[seat], state.jokerRank)),
   );
   return finalScores(state, arrangements);
 }
@@ -76,10 +82,10 @@ export function loneValue(card: Card, jokerRank: Rank | null): number {
 
 // Setiap kartu dipilih untuk masuk kombinasi (plus) atau jadi sampah (minus). Dicari dengan rekursi,
 // tangan maksimal 8 kartu. Jika nilai sama, kartu dibiarkan sebagai sampah.
-function bestFrom(hand: Card[], jokerRank: Rank | null, allowJokerMelds: boolean): Best {
+function bestFrom(hand: Card[], jokerRank: Rank | null): Best {
   if (hand.length === 0) return { score: 0, melds: [], leftover: [], pure: 0, jokers: 0 };
   const [first, ...rest] = hand;
-  const alone = bestFrom(rest, jokerRank, allowJokerMelds);
+  const alone = bestFrom(rest, jokerRank);
   let best: Best = {
     score: loneValue(first, jokerRank) + alone.score,
     melds: alone.melds,
@@ -91,9 +97,8 @@ function bestFrom(hand: Card[], jokerRank: Rank | null, allowJokerMelds: boolean
     const meld = [first, ...group];
     const check = classify(meld, jokerRank);
     if (check.kind === "invalid") continue;
-    if (!allowJokerMelds && containsJoker(meld, jokerRank)) continue;
     const remaining = rest.filter((card) => !group.includes(card));
-    const inner = bestFrom(remaining, jokerRank, allowJokerMelds);
+    const inner = bestFrom(remaining, jokerRank);
     const candidate: Best = {
       score: meldValue(meld, jokerRank) + inner.score,
       melds: [meld, ...inner.melds],
@@ -113,12 +118,9 @@ function isBetter(a: Best, b: Best): boolean {
   return a.jokers < b.jokers;
 }
 
-export function containsJoker(meld: Card[], jokerRank: Rank | null): boolean {
-  return jokerRank !== null && meld.some((card) => card.rank === jokerRank);
-}
-
-// Kombinasi yang memakai joker dihitung plus kalau pemain sudah menurunkan seri murni, atau punya seri murni di tangan.
-export function canUseJokerMelds(hand: Card[], laidPureSeri: boolean, jokerRank: Rank | null): boolean {
+// Kombinasi di tangan (seri, tris, atau dengan joker) dihitung plus kalau pemain sudah menurunkan seri murni,
+// atau punya seri murni di tangan.
+export function canUseMelds(hand: Card[], laidPureSeri: boolean, jokerRank: Rank | null): boolean {
   return laidPureSeri || hasPureSeri(hand, jokerRank);
 }
 

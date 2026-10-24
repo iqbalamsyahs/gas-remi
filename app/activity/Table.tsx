@@ -10,8 +10,10 @@ import {
   type ReactNode,
 } from "react";
 import type { Card } from "../../src/rules/cards";
-import { canCallCekih } from "../../src/rules/cekih";
+import { canCallCekih, cekihTargets } from "../../src/rules/cekih";
 import { classify } from "../../src/rules/combos";
+import { isMuted, playSound, setMuted, soundsFor } from "../../src/client/sound";
+import type { PlayerId } from "../../src/rules/opening";
 import type { Intent } from "../../server/room";
 import type { PlayerInfo, PlayerView } from "../../server/view";
 import styles from "./Table.module.css";
@@ -31,6 +33,10 @@ function bySuitThenRank(a: Card, b: Card): number {
 }
 
 const TARGET_PRESETS = [500, 1000, 1500, 2000];
+// Kalau giliranmu belum dimainkan selama ini, bunyi giliran diulang sekali.
+const TURN_REMINDER_MS = 20_000;
+// Popup joker tertutup saat pemain klik OK, atau otomatis setelah sekian detik.
+const JOKER_POPUP_SECONDS = 15;
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
@@ -157,7 +163,8 @@ export function Table({ view, error, onIntent }: TableProps) {
   // Tarik kartu tangan untuk mengubah urutannya. Kartu bergeser langsung saat pointer melewati kartu lain.
   const dragRef = useRef<{ id: string; moved: boolean } | null>(null);
   const justDragged = useRef(false);
-  const [confirmReset, setConfirmReset] = useState(false);
+  // Aksi berisiko (reset, keluar) butuh dua klik. Kembali normal sendiri setelah beberapa detik.
+  const [confirming, setConfirming] = useState<"reset" | "leave" | null>(null);
   // Susunan kombinasi saat fase penyusunan. Null berarti belum diubah, jadi pakai usulan server.
   const [edit, setEdit] = useState<{ round: number; groups: string[][] } | null>(null);
   const [targetInput, setTargetInput] = useState("");
@@ -176,34 +183,55 @@ export function Table({ view, error, onIntent }: TableProps) {
   const discardPhase = board?.phase === "discard";
   // Pembukaan memakai status "opening", permainan memakai "playing". Keduanya boleh bertindak saat gilirannya.
   const playable = board !== null && (view.status === "opening" || view.status === "playing") && myTurn;
+
+  // Suara dibunyikan dari perubahan tampilan: giliran, cekih, joker, ronde selesai, dan gerakan kartu.
+  const [muted, setMutedState] = useState(isMuted);
+  const prevView = useRef<PlayerView | null>(null);
+  useEffect(() => {
+    soundsFor(prevView.current, view).forEach(playSound);
+    prevView.current = view;
+  }, [view]);
+  // Pengingat giliran. Timer mulai ulang setiap ada update, jadi hanya berbunyi kalau giliran didiamkan.
+  useEffect(() => {
+    if (!playable) return;
+    const timer = setTimeout(() => playSound("turn"), TURN_REMINDER_MS);
+    return () => clearTimeout(timer);
+  }, [playable, view]);
   const scoringPhase = view.status === "scoring" && view.scoring !== null;
   const emptySeats = view.seats.filter((seat) => seat === "").length;
   const nameOf = (seat: number) => view.players[seat]?.name ?? `P${seat + 1}`;
+  // Penonton tidak punya kursi: tanpa tangan dan tanpa aksi.
+  const spectator = view.you === null;
   // Cekih: tombol hanya aktif kalau tangan sudah tinggal satu kartu lagi untuk tutup.
   const myCekih = board?.cekih.filter((c) => c.caller === view.you) ?? [];
-  const cekihReady = board !== null && view.status === "playing" && canCallCekih(view.hand, board.jokerRank);
-  const myConfirmed = scoringPhase && view.scoring!.confirmed[view.you];
+  const cekihReady =
+    board !== null &&
+    view.you !== null &&
+    view.status === "playing" &&
+    canCallCekih(view.hand, board.jokerRank, board.laidPureSeri[view.you]);
+  const allowedTargets = view.you === null ? [] : cekihTargets(view.you);
+  const myConfirmed = scoringPhase && view.you !== null && view.scoring!.confirmed[view.you];
   const jokerRank = board?.jokerRank ?? null;
 
-  // Joker diumumkan sekali saat ditentukan (popup 5 detik), lalu hilang dan tidak ditampilkan lagi.
-  const [jokerPopup, setJokerPopup] = useState<string | null>(null);
+  // Joker diumumkan sekali saat ditentukan. Popup menutupi meja sampai pemain klik OK atau waktunya habis,
+  // lalu tidak ditampilkan lagi: joker harus diingat pemain.
+  const [jokerLeft, setJokerLeft] = useState(0);
   const [prevJoker, setPrevJoker] = useState(jokerRank);
   if (jokerRank !== prevJoker) {
     setPrevJoker(jokerRank);
-    if (jokerRank !== null) setJokerPopup(jokerRank);
+    if (jokerRank !== null) setJokerLeft(JOKER_POPUP_SECONDS);
   }
   useEffect(() => {
-    if (jokerPopup === null) return;
-    const timer = setTimeout(() => setJokerPopup(null), 5000);
+    if (jokerLeft <= 0) return;
+    const timer = setTimeout(() => setJokerLeft((left) => left - 1), 1000);
     return () => clearTimeout(timer);
-  }, [jokerPopup]);
+  }, [jokerLeft]);
 
-  // Konfirmasi reset kembali normal sendiri kalau tidak diklik lagi dalam beberapa detik.
   useEffect(() => {
-    if (!confirmReset) return;
-    const timer = setTimeout(() => setConfirmReset(false), 3000);
+    if (confirming === null) return;
+    const timer = setTimeout(() => setConfirming(null), 3000);
     return () => clearTimeout(timer);
-  }, [confirmReset]);
+  }, [confirming]);
 
   // Kartu yang belum punya posisi (baru datang) ditaruh di belakang, sesuai urutan dari server.
   const handIds = [
@@ -279,14 +307,14 @@ export function Table({ view, error, onIntent }: TableProps) {
     setPickupExtra([]);
   }
 
-  function resetClicked() {
-    if (!confirmReset) {
-      setConfirmReset(true);
+  function confirmThen(kind: "reset" | "leave") {
+    if (confirming !== kind) {
+      setConfirming(kind);
       return;
     }
-    setConfirmReset(false);
+    setConfirming(null);
     clearSelection();
-    onIntent({ type: "reset" });
+    onIntent({ type: kind });
   }
 
   // Kartu yang bisa dipakai untuk menurunkan seri murni atau membuang.
@@ -304,9 +332,38 @@ export function Table({ view, error, onIntent }: TableProps) {
 
   return (
     <main className={styles.page}>
-      {jokerPopup !== null && <div className={styles.jokerPopup}>Joker ditentukan: {jokerPopup}</div>}
+      {jokerLeft > 0 && jokerRank !== null && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.jokerPopup} role="dialog" aria-label="Joker ditentukan">
+            <div>Joker ronde ini: {jokerRank}</div>
+            {board?.jokerCard && (
+              <div className={styles.jokerCard}>
+                <CardFace card={board.jokerCard} disabled />
+                <span>Kartu penentu (keluar dari permainan). Tiga kartu {jokerRank} lainnya jadi joker.</span>
+              </div>
+            )}
+            <div className={styles.label}>Ingat baik-baik, joker tidak ditampilkan lagi.</div>
+            <button type="button" onClick={() => setJokerLeft(0)}>
+              OK ({jokerLeft})
+            </button>
+          </div>
+        </div>
+      )}
       <header className={styles.header}>
-        <div>Target {view.target} · Ronde {view.rounds}</div>
+        <div>
+          Target {view.target} · Ronde {view.rounds}{" "}
+          <button
+            type="button"
+            className={styles.tool}
+            aria-label={muted ? "Nyalakan suara" : "Matikan suara"}
+            onClick={() => {
+              setMuted(!muted);
+              setMutedState(!muted);
+            }}
+          >
+            {muted ? "🔇" : "🔊"}
+          </button>
+        </div>
         <div className={styles.totals}>
           {view.seats.map((_, seat) => (
             <span key={seat} className={styles.playerRow + (seat === view.you ? " " + styles.me : "")}>
@@ -332,7 +389,7 @@ export function Table({ view, error, onIntent }: TableProps) {
           )}
         </div>
       )}
-      {view.rounds === 0 && view.status !== "finished" && view.status !== "cancelled" && (
+      {!spectator && view.rounds === 0 && view.status !== "finished" && view.status !== "cancelled" && (
         <section className={styles.targetCard}>
           <div className={styles.label}>Target poin: {view.target}</div>
           <div className={styles.presets}>
@@ -378,15 +435,17 @@ export function Table({ view, error, onIntent }: TableProps) {
       )}
       {scoringPhase && (
         <p className={styles.notice}>
-          Ronde selesai. {myConfirmed ? `Menunggu konfirmasi dari ${waiting}.` : "Susun kombinasimu lalu konfirmasi."}
+          Ronde selesai. {myConfirmed || spectator ? `Menunggu konfirmasi dari ${waiting}.` : "Susun kombinasimu lalu konfirmasi."}
         </p>
       )}
       {view.status === "waiting" && (
         <section className={styles.targetCard}>
           <div className={styles.label}>Menunggu pemain. Kursi kosong: {emptySeats}</div>
-          <button type="button" className={styles.stock} onClick={() => onIntent({ type: "add_bots" })}>
-            Tambah bot ({emptySeats})
-          </button>
+          {!spectator && (
+            <button type="button" className={styles.stock} onClick={() => onIntent({ type: "add_bots" })}>
+              Tambah bot ({emptySeats})
+            </button>
+          )}
         </section>
       )}
       {view.revealed !== null && view.status === "scoring" && (
@@ -400,6 +459,16 @@ export function Table({ view, error, onIntent }: TableProps) {
         </section>
       )}
       {error && <p className={styles.error}>{error}</p>}
+      {spectator && (
+        <section className={styles.targetCard}>
+          <div className={styles.label}>Kamu menonton. Tangan pemain tidak terlihat.</div>
+          {view.canSit && (
+            <button type="button" className={styles.stock} onClick={() => onIntent({ type: "sit" })}>
+              Ikut main
+            </button>
+          )}
+        </section>
+      )}
 
       <section className={styles.opponents}>
         {view.handCounts.map((count, seat) =>
@@ -503,14 +572,14 @@ export function Table({ view, error, onIntent }: TableProps) {
         )}
       </section>
 
-      {board && board.table[view.you].length > 0 && !scoringPhase && (
+      {board && view.you !== null && board.table[view.you].length > 0 && !scoringPhase && (
         <section className={styles.hand}>
           <div className={styles.label}>Kombinasi yang kamu turunkan</div>
           <Melds melds={board.table[view.you]} />
         </section>
       )}
 
-      {scoringPhase && !myConfirmed ? (
+      {spectator ? null : scoringPhase && !myConfirmed ? (
         <section className={styles.hand}>
           <div className={styles.label}>Kombinasimu (kartu yang tidak masuk kombinasi dihitung minus)</div>
           {groups.map((group, index) => (
@@ -594,10 +663,10 @@ export function Table({ view, error, onIntent }: TableProps) {
             {nameOf(c.caller)} menyebut cekih ke kamu.
           </p>
         ))}
-      {view.status === "playing" && (
+      {view.status === "playing" && !spectator && (
         <section className={styles.actions}>
           {view.players.map((info, seat) =>
-            seat === view.you || info.kind === "empty" || myCekih.some((c) => c.target === seat) ? null : (
+            !allowedTargets.includes(seat as PlayerId) || info.kind === "empty" || myCekih.some((c) => c.target === seat) ? null : (
               <button
                 key={seat}
                 type="button"
@@ -622,8 +691,13 @@ export function Table({ view, error, onIntent }: TableProps) {
         </section>
       )}
       <section className={styles.actions}>
-        <button type="button" className={styles.reset} onClick={resetClicked} disabled={view.you !== 0}>
-          {view.you !== 0 ? "Reset game (hanya pemain pertama)" : confirmReset ? "Klik lagi untuk reset game" : "Reset game"}
+        {!spectator && (
+          <button type="button" className={styles.danger} onClick={() => confirmThen("leave")}>
+            {confirming === "leave" ? "Klik lagi untuk keluar dari meja" : "Keluar dari meja"}
+          </button>
+        )}
+        <button type="button" className={styles.reset} onClick={() => confirmThen("reset")} disabled={!view.canReset}>
+          {!view.canReset ? "Reset game (hanya pemain manusia pertama)" : confirming === "reset" ? "Klik lagi untuk reset game" : "Reset game"}
         </button>
       </section>
       {panel === "result" && view.roundDetail !== null && (
@@ -663,7 +737,9 @@ export function Table({ view, error, onIntent }: TableProps) {
                     ))}
                   </div>
                 )}
-                {detail.bonus !== 0 && <div className={styles.resultLine}>Bonus closed <span className={styles.plus}>{signed(detail.bonus)}</span></div>}
+                {detail.bonus !== 0 && <div className={styles.resultLine}>Bonus tutup tangan <span className={styles.plus}>{signed(detail.bonus)}</span></div>}
+                {!!detail.cekihBonus && <div className={styles.resultLine}>Bonus cekih <span className={styles.plus}>{signed(detail.cekihBonus)}</span></div>}
+                {!!detail.cekihPenalty && <div className={styles.resultLine}>Hukuman cekih <span className={styles.minus}>{signed(detail.cekihPenalty)}</span></div>}
                 {detail.penalty !== 0 && <div className={styles.resultLine}>Penalti joker <span className={styles.minus}>{signed(detail.penalty)}</span></div>}
               </div>
             ))}

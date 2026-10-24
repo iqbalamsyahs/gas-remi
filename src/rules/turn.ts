@@ -24,6 +24,7 @@ export interface RoundState {
   stock: Card[];
   discard: DiscardPile;
   jokerRank: Rank | null;
+  jokerCard?: Card | null;
   turn: PlayerId;
   phase: "draw" | "discard";
   drewFrom: "stock" | "discard" | null;
@@ -133,11 +134,8 @@ export function discardCard(state: RoundState, player: PlayerId, card: Card): Ro
   };
 
   const closed = checkClosed(state, player, card);
-  if (closed) {
-    const penaltiesAfter = [...next.penalties];
-    if (closed.cekihTarget !== null) penaltiesAfter[closed.cekihTarget] += closed.cekihPenalty;
-    return { ...next, penalties: penaltiesAfter, result: closed };
-  }
+  // Hukuman cekih disimpan di result, terpisah dari penalti joker.
+  if (closed) return { ...next, result: closed };
   if (state.stock.length === 0) {
     return { ...next, result: { closedBy: "stock_empty", bonus: 0, closingCard: null, cekihTarget: null, cekihPenalty: 0 } };
   }

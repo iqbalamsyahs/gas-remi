@@ -15,6 +15,8 @@ export interface OpeningState {
   discard: DiscardPile;
   jokerRank: Rank | null;
   penalties: number[];
+  // Kartu penentu joker (sudah keluar dari permainan). Ditampilkan sekali di popup joker.
+  jokerCard?: Card | null;
 }
 
 const JOKER_PENALTY_MULTIPLIER = 10;
@@ -70,6 +72,7 @@ export function resolveJoker(state: OpeningState, rng: () => number): OpeningSta
     ...state,
     stock,
     jokerRank,
+    jokerCard: penentu,
     penalties,
     discard: { ...state.discard, closedIndex },
   };

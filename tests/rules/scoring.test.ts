@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card, Rank } from "../../src/rules/cards";
-import { handArrangement, scoreRound, seatScore, validateArrangement } from "../../src/rules/scoring";
+import { canUseMelds, handArrangement, scoreRound, seatScore, validateArrangement } from "../../src/rules/scoring";
 import type { RoundState } from "../../src/rules/turn";
 
 function c(id: string): Card {
@@ -85,7 +85,7 @@ test("seatScore with the automatic arrangement matches scoreRound", () => {
     hands: [[c("2H"), c("3H"), c("4H"), c("9S")], [], [], []],
     table: [[[c("7C"), c("7D"), c("7S")]], [], [], []],
   });
-  const auto = handArrangement(s.hands[0], s.jokerRank, s.laidPureSeri[0]);
+  const auto = handArrangement(s.hands[0], s.jokerRank, canUseMelds(s.hands[0], s.laidPureSeri[0], s.jokerRank));
   expect(seatScore(s, 0, auto)).toBe(scoreRound(s)[0]);
 });
 
@@ -102,7 +102,24 @@ test("joker meld in hand counts plus once a pure seri is laid this round", () =>
   expect(scoreRound(withPure)[0]).toBe(15);
 });
 
-test("non-joker meld in hand counts plus without a pure seri", () => {
+test("tris in hand counts minus without a pure seri", () => {
+  // 8S 8C 8D tanpa seri murni (di meja maupun di tangan): semua kartu minus.
+  const hand = ["8S", "8C", "8D"].map(c);
+  const s = round({ hands: [hand, [], [], []] });
+  expect(scoreRound(s)[0]).toBe(-15);
+  expect(handArrangement(hand, null, false).melds).toEqual([]);
+});
+
+test("cekih penalty is scored for the target, separate from joker penalties", () => {
+  const s = round({
+    result: { closedBy: 0, bonus: 100, closingCard: c("KD"), cekihTarget: 2, cekihPenalty: -100 },
+    pickedFromDiscard: [true, false, false, false],
+  });
+  expect(scoreRound(s)).toEqual([100, 0, -100, 0]);
+  expect(s.penalties).toEqual([0, 0, 0, 0]);
+});
+
+test("pure seri in hand counts plus", () => {
   const hand = ["3H", "4H", "5H"].map(c);
   const s = round({ jokerRank: "9", hands: [hand, [], [], []], laidPureSeri: [false, false, false, false] });
   expect(scoreRound(s)[0]).toBe(15);

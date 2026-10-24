@@ -47,7 +47,8 @@ test("tutup biasa with cekih: closer gets +10x closing card and target gets -10x
   expect(closed.result?.closedBy).toBe(0);
   expect(closed.result?.bonus).toBe(100);
   expect(closed.result?.cekihTarget).toBe(2);
-  expect(closed.penalties[2]).toBe(-100);
+  expect(closed.result?.cekihPenalty).toBe(-100);
+  expect(closed.penalties[2]).toBe(0);
 });
 
 test("tutup biasa without taking from the target: no bonus and no penalty", () => {
@@ -78,7 +79,8 @@ test("two players cekih the same target: only the closer's cekih counts", () => 
   const closed = discardCard(picked, 3, c("KD"));
   expect(closed.result?.closedBy).toBe(3);
   expect(closed.result?.cekihTarget).toBe(2);
-  expect(closed.penalties[2]).toBe(-100);
+  expect(closed.result?.cekihPenalty).toBe(-100);
+  expect(closed.penalties[2]).toBe(0);
 });
 
 test("tutup tangan after an earlier pickup this round gets no 250 and no cekih effect", () => {
