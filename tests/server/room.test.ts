@@ -461,3 +461,12 @@ test("an old paused snapshot without offline times still times out to a bot", ()
   expect(restored.seats[1]).toBe("bot:2");
   expect(restored.status).toBe("opening");
 });
+
+test("with no human seated, a spectator may reset so the table cannot get stuck", () => {
+  const room = newRoom();
+  expect(room.canReset(0)).toBe(true);
+  expect(room.canReset(null)).toBe(false);
+  [0, 1, 2, 3].forEach((seat) => room.leave(seat as 0 | 1 | 2 | 3));
+  expect(room.canReset(null)).toBe(true);
+  expect(viewFor(room, null).canReset).toBe(true);
+});

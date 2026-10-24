@@ -61,7 +61,7 @@ export interface PlayerView {
   you: PlayerId | null;
   // Penonton bisa ikut main (ada kursi kosong saat menunggu atau kursi bot).
   canSit: boolean;
-  // Penerima ini boleh reset game (pemain manusia di kursi paling awal).
+  // Penerima ini boleh reset game (pemain manusia di kursi paling awal, atau penonton kalau tidak ada manusia).
   canReset: boolean;
   seats: string[];
   target: number;
@@ -127,7 +127,7 @@ export function viewFor(room: Room, seat: PlayerId | null): PlayerView {
     },
     hand: board && seat !== null ? board.hands[seat] : [],
     canSit: room.canSit(),
-    canReset: seat !== null && seat === room.firstHumanSeat(),
+    canReset: room.canReset(seat),
     handCounts: board ? board.hands.map((hand) => hand.length) : [0, 0, 0, 0],
   };
 }

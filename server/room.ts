@@ -585,6 +585,11 @@ export class Room {
     return seat === -1 ? null : (seat as PlayerId);
   }
 
+  // Reset milik pemain manusia di kursi paling awal. Tanpa manusia di meja, penonton yang boleh reset (seat null).
+  canReset(seat: PlayerId | null): boolean {
+    return this.firstHumanSeat() === seat;
+  }
+
   private openSeat(): PlayerId | null {
     if (this.status === "finished" || this.status === "cancelled") return null;
     const empty = this.status === "waiting" ? this.seats.indexOf("") : -1;
