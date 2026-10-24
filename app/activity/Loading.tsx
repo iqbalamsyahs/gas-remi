@@ -61,7 +61,7 @@ export function Loading({ step, note, failure }: { step: number; note: string; f
       ) : (
         <>
           <p role="alert">Gagal masuk ke meja.</p>
-          <button type="button" onClick={() => location.reload()}>
+          <button type="button" className={styles.stock} onClick={() => location.reload()}>
             Coba lagi
           </button>
           <details className={styles.loadingDetail}>

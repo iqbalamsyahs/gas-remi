@@ -343,7 +343,7 @@ export function Table({ view, error, onIntent }: TableProps) {
               </div>
             )}
             <div className={styles.label}>Ingat baik-baik, joker tidak ditampilkan lagi.</div>
-            <button type="button" onClick={() => setJokerLeft(0)}>
+            <button type="button" className={styles.stock} onClick={() => setJokerLeft(0)}>
               OK ({jokerLeft})
             </button>
           </div>
