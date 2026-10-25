@@ -41,11 +41,11 @@ function closingRound(): RoundState {
   });
 }
 
-test("tutup biasa with cekih: closer gets the tutup bonus plus +10x cekih, target gets -10x", () => {
+test("tutup biasa with cekih: closer gets +10x as the cekih bonus instead of the tutup bonus, target gets -10x", () => {
   const picked = pickFromDiscard(closingRound(), 0, c("8H"), [c("8S"), c("8C")], []);
   const closed = discardCard(picked, 0, c("KD"));
   expect(closed.result?.closedBy).toBe(0);
-  expect(closed.result?.bonus).toBe(200);
+  expect(closed.result?.bonus).toBe(100);
   expect(closed.result?.cekihTarget).toBe(2);
   expect(closed.result?.cekihPenalty).toBe(-100);
   expect(closed.penalties[2]).toBe(0);

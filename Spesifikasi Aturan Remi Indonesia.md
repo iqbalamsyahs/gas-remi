@@ -112,7 +112,7 @@ Ronde berakhir dengan salah satu dari dua cara: ada pemain yang closed, atau can
 | --- | --- |
 | Mengambil dari cangkulan | +250 |
 | Mengambil dari cangkulan, kartu penutupnya joker | +500 (tanpa penalti buang joker) |
-| Pernah mengambil dari buangan (tutup biasa) | +10× nilai kartu penutup, ditambah bonus cekih jika cocok |
+| Pernah mengambil dari buangan (tutup biasa) | +10× nilai kartu penutup. Jika cekih cocok, bonus ini menjadi bonus cekih (tidak ditambah) |
 
 **Cekih**
 

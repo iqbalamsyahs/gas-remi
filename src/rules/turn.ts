@@ -169,7 +169,8 @@ export function checkClosed(state: RoundState, player: PlayerId, card: Card): Ro
     const bonus = isJoker ? CLOSED_FROM_STOCK_JOKER_BONUS : CLOSED_FROM_STOCK_BONUS;
     return { closedBy: player, bonus, closingCard: card, cekihTarget: null, cekihPenalty: 0, fromHand: true };
   }
-  // Tutup biasa: bonus 10x nilai kartu penutup, ditambah bonus cekih kalau ada cekih yang cocok.
+  // Tutup biasa: bonus 10x nilai kartu penutup. Kalau ada cekih yang cocok, bonus itu menjadi bonus cekih
+  // (tidak ditambah), dan pemain tercekih kena -10x.
   const closedBonus = CLOSED_MULTIPLIER * baseValue(card.rank);
   const target = matchingCekihTarget(state, player);
   if (target === null) {
@@ -178,7 +179,7 @@ export function checkClosed(state: RoundState, player: PlayerId, card: Card): Ro
   const amount = CEKIH_MULTIPLIER * baseValue(card.rank);
   return {
     closedBy: player,
-    bonus: closedBonus + amount,
+    bonus: amount,
     closingCard: card,
     cekihTarget: target,
     cekihPenalty: -amount,

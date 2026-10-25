@@ -34,7 +34,7 @@ function bySuitThenRank(a: Card, b: Card): number {
 }
 
 const TARGET_PRESETS = [500, 1000, 1500, 2000];
-// Kalau giliranmu belum dimainkan selama ini, bunyi giliran diulang sekali.
+// Selama masih giliranmu, pengingat berbunyi setiap selang waktu ini.
 const TURN_REMINDER_MS = 20_000;
 // Popup joker tertutup saat pemain klik OK, atau otomatis setelah sekian detik.
 const JOKER_POPUP_SECONDS = 15;
@@ -216,23 +216,12 @@ export function Table({ view, error, onIntent }: TableProps) {
     soundsFor(prevView.current, view).forEach(playSound);
     prevView.current = view;
   }, [view]);
-  // Pengingat giliran. Timer mulai ulang setiap ada update atau aktivitas pemain (klik, sentuh, tombol),
-  // jadi hanya berbunyi kalau giliran benar-benar didiamkan.
+  // Pengingat giliran: berbunyi tetap setiap 20 detik selama masih giliranmu.
   useEffect(() => {
     if (!playable) return;
-    let timer = setTimeout(() => playSound("turn"), TURN_REMINDER_MS);
-    const restart = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => playSound("turn"), TURN_REMINDER_MS);
-    };
-    window.addEventListener("pointerdown", restart);
-    window.addEventListener("keydown", restart);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("pointerdown", restart);
-      window.removeEventListener("keydown", restart);
-    };
-  }, [playable, view]);
+    const timer = setInterval(() => playSound("reminder"), TURN_REMINDER_MS);
+    return () => clearInterval(timer);
+  }, [playable]);
   const scoringPhase = view.status === "scoring" && view.scoring !== null;
   const tutupTangan = board?.result?.fromHand ?? false;
   const emptySeats = view.seats.filter((seat) => seat === "").length;
@@ -635,7 +624,7 @@ export function Table({ view, error, onIntent }: TableProps) {
           </div>
         </section>
       ) : (
-        <section className={`${styles.hand} ${playable ? styles.active : ""}`}>
+        <section className={styles.hand}>
           <div className={styles.label}>
             Kartumu{" "}
             <button type="button" className={styles.tool} onClick={() => setOrder([...view.hand].sort(bySuitThenRank).map((card) => card.id))}>
