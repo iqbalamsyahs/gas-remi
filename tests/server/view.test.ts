@@ -26,7 +26,7 @@ function boardWith(closedBy: number | "stock_empty" | null): Board {
     turn: 0,
     phase: "discard",
     drewFrom: null,
-    result: closedBy === null ? null : { closedBy, bonus: 0, closingCard: null, cekihTarget: null, cekihPenalty: 0 },
+    result: closedBy === null ? null : { closedBy, bonus: 0, closingCard: null, cekihTarget: null, cekihPenalty: 0, fromHand: false },
   } as unknown as Board;
 }
 

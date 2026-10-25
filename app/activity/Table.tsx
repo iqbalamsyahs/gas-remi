@@ -9,9 +9,10 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import type { Card } from "../../src/rules/cards";
+import type { Card, Rank } from "../../src/rules/cards";
 import { canCallCekih, cekihTargets } from "../../src/rules/cekih";
-import { classify } from "../../src/rules/combos";
+import { classify, orderMeld } from "../../src/rules/combos";
+import { MAX_PICKUP_FROM_TOP } from "../../src/rules/discard";
 import { isMuted, playSound, setMuted, soundsFor } from "../../src/client/sound";
 import type { PlayerId } from "../../src/rules/opening";
 import type { Intent } from "../../server/room";
@@ -146,12 +147,12 @@ function Avatar({ info, size = 22 }: { info: PlayerInfo; size?: number }) {
 
 const TUTUP_TANGAN_NOTICE = "Ada yang tutup tangan: kartu semua pemain tidak dihitung, kecuali penalti joker.";
 
-function Melds({ melds }: { melds: Card[][] }) {
+function Melds({ melds, jokerRank }: { melds: Card[][]; jokerRank: Rank | null }) {
   return (
     <div className={styles.row}>
       {melds.map((meld, i) => (
         <div key={i} className={styles.meld}>
-          {meld.map((card) => (
+          {orderMeld(meld, jokerRank).map((card) => (
             <CardFace key={card.id} card={card} disabled />
           ))}
         </div>
@@ -218,8 +219,7 @@ export function Table({ view, error, onIntent }: TableProps) {
     return () => clearTimeout(timer);
   }, [playable, view]);
   const scoringPhase = view.status === "scoring" && view.scoring !== null;
-  // Tutup tangan: penutup dapat bonus tanpa cekih (tutup biasa hanya dapat bonus lewat cekih).
-  const tutupTangan = !!board?.result && board.result.bonus > 0 && board.result.cekihTarget === null;
+  const tutupTangan = board?.result?.fromHand ?? false;
   const emptySeats = view.seats.filter((seat) => seat === "").length;
   const nameOf = (seat: number) => view.players[seat]?.name ?? `P${seat + 1}`;
   // Penonton tidak punya kursi: tanpa tangan dan tanpa aksi.
@@ -432,7 +432,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       {view.revealed !== null && view.status === "scoring" && (
         <section className={styles.detail}>
           <div className={styles.label}>Tangan {nameOf(view.revealed.seat)} (penutup), bisa dicek semua pemain</div>
-          <Melds melds={view.revealed.groups} />
+          <Melds melds={view.revealed.groups} jokerRank={board?.jokerRank ?? null} />
         </section>
       )}
       {error && <p className={styles.error}>{error}</p>}
@@ -456,7 +456,7 @@ export function Table({ view, error, onIntent }: TableProps) {
                 <strong>{nameOf(seat)}</strong>
               </div>
               <span className={styles.opponentCount}>{view.seats[seat] === "" ? "kosong" : `${count} kartu`}</span>
-              {board && board.table[seat].length > 0 && <Melds melds={board.table[seat]} />}
+              {board && board.table[seat].length > 0 && <Melds melds={board.table[seat]} jokerRank={board.jokerRank} />}
             </div>
           ),
         )}
@@ -482,26 +482,31 @@ export function Table({ view, error, onIntent }: TableProps) {
         </div>
 
         <div className={styles.discard}>
-          <div className={styles.label}>Buangan (klik kartu untuk ambil)</div>
+          <div className={styles.label}>Buangan (kartu bertanda hijau bisa diambil)</div>
           {pickupTarget !== null && (
             <div className={styles.label}>Kartu di atas target boleh ikut dibentuk jadi kombinasi. Klik untuk memilih.</div>
           )}
           <div className={styles.row}>
-            {board?.discard.cards.map((card, index) =>
-              "hidden" in card ? (
+            {board?.discard.cards.map((card, index) => {
+              // Bisa diambil: maksimal 7 dari atas dan tidak di/bawah joker tertutup. Ditandai untuk semua pemain.
+              const pickable =
+                board.discard.cards.length - index <= MAX_PICKUP_FROM_TOP &&
+                (board.discard.closedIndex === null || index > board.discard.closedIndex);
+              return "hidden" in card ? (
                 <button key={card.id} type="button" className={`${styles.card} ${styles.faceDown}`} disabled>
                   ?
                 </button>
               ) : (
-                <CardFace
-                  key={card.id}
-                  card={card}
-                  selected={pickupTarget === card.id || pickupExtra.includes(card.id)}
-                  disabled={!playable || !drawPhase || (board.discard.closedIndex !== null && index <= board.discard.closedIndex)}
-                  onClick={() => discardClick(card.id, index)}
-                />
-              ),
-            )}
+                <span key={card.id} className={pickable ? styles.pickable : styles.blocked}>
+                  <CardFace
+                    card={card}
+                    selected={pickupTarget === card.id || pickupExtra.includes(card.id)}
+                    disabled={!playable || !drawPhase || !pickable}
+                    onClick={() => discardClick(card.id, index)}
+                  />
+                </span>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -553,7 +558,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       {board && view.you !== null && board.table[view.you].length > 0 && !scoringPhase && (
         <section className={styles.hand}>
           <div className={styles.label}>Kombinasi yang kamu turunkan</div>
-          <Melds melds={board.table[view.you]} />
+          <Melds melds={board.table[view.you]} jokerRank={board.jokerRank} />
         </section>
       )}
 
@@ -672,7 +677,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       {panel === "result" && view.roundDetail !== null && (
         <Modal title="Hasil ronde terakhir" onClose={() => setPanel(null)}>
         <section className={styles.detail}>
-          {view.roundDetail.some((detail) => detail.bonus > 0) && <p className={styles.notice}>{TUTUP_TANGAN_NOTICE}</p>}
+          {view.roundDetail.some((detail) => detail.fromHand) && <p className={styles.notice}>{TUTUP_TANGAN_NOTICE}</p>}
           <div className={styles.resultGrid}>
             {view.roundDetail.map((detail, seat) => (
               <div key={seat} className={styles.resultSeat}>
@@ -705,7 +710,7 @@ export function Table({ view, error, onIntent }: TableProps) {
                     ))}
                   </div>
                 )}
-                {detail.bonus !== 0 && <div className={styles.resultLine}>Bonus tutup tangan <span className={styles.plus}>{signed(detail.bonus)}</span></div>}
+                {detail.bonus !== 0 && <div className={styles.resultLine}>{detail.fromHand ? "Bonus tutup tangan" : "Bonus tutup"} <span className={styles.plus}>{signed(detail.bonus)}</span></div>}
                 {!!detail.cekihBonus && <div className={styles.resultLine}>Bonus cekih <span className={styles.plus}>{signed(detail.cekihBonus)}</span></div>}
                 {!!detail.cekihPenalty && <div className={styles.resultLine}>Hukuman cekih <span className={styles.minus}>{signed(detail.cekihPenalty)}</span></div>}
                 {detail.penalty !== 0 && <div className={styles.resultLine}>Penalti joker <span className={styles.minus}>{signed(detail.penalty)}</span></div>}

@@ -52,7 +52,7 @@ test("leftover joker in hand is minus 10x", () => {
 });
 
 test("closed bonus is added to the closer only", () => {
-  const s = round({ result: { closedBy: 2, bonus: 250, closingCard: c("KC"), cekihTarget: null, cekihPenalty: 0 } });
+  const s = round({ result: { closedBy: 2, bonus: 250, closingCard: c("KC"), cekihTarget: null, cekihPenalty: 0, fromHand: true } });
   expect(scoreRound(s)).toEqual([0, 0, 250, 0]);
 });
 
@@ -112,7 +112,7 @@ test("tris in hand counts minus without a pure seri", () => {
 
 test("cekih penalty is scored for the target, separate from joker penalties", () => {
   const s = round({
-    result: { closedBy: 0, bonus: 100, closingCard: c("KD"), cekihTarget: 2, cekihPenalty: -100 },
+    result: { closedBy: 0, bonus: 100, closingCard: c("KD"), cekihTarget: 2, cekihPenalty: -100, fromHand: false },
     pickedFromDiscard: [true, false, false, false],
   });
   expect(scoreRound(s)).toEqual([100, 0, -100, 0]);
@@ -136,7 +136,7 @@ test("tutup tangan: the closer gets 250 and everyone else gets 0, no card scorin
   // Tutup dari cangkulan saja (tidak pernah mengambil dari buangan): hanya +250 untuk penutup.
   const s = round({
     hands: [[c("2H"), c("3H"), c("4H"), c("KS")], [c("7C"), c("KD")], [], []],
-    result: { closedBy: 0, bonus: 250, closingCard: c("KS"), cekihTarget: null, cekihPenalty: 0 },
+    result: { closedBy: 0, bonus: 250, closingCard: c("KS"), cekihTarget: null, cekihPenalty: 0, fromHand: true },
     pickedFromDiscard: [false, false, false, false],
     penalties: [0, -50, 0, 0],
   });

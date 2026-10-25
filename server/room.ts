@@ -82,8 +82,10 @@ export interface RoundDetail {
   leftoverValues: number[];
   // Penalti buang joker.
   penalty: number;
-  // Bonus tutup tangan (+250).
+  // Bonus tutup: tutup tangan (+250/+500) atau tutup biasa (10x kartu penutup).
   bonus: number;
+  // Penutup ronde ini tutup tangan.
+  fromHand: boolean;
   // Bonus untuk penutup dan hukuman untuk pemain tercekih (negatif).
   cekihBonus: number;
   cekihPenalty: number;
@@ -491,17 +493,18 @@ export class Room {
     const arrangements = this.scoringArrangement!;
     const scores = finalScores(round, arrangements);
     this.roundDetail = arrangements.map((arrangement, seat) => {
-      const closed = round.result?.closedBy === seat ? round.result.bonus : 0;
-      // Tutup biasa (pernah mengambil dari buangan) hanya dapat bonus lewat cekih.
-      const viaCekih = round.pickedFromDiscard[seat];
+      const result = round.result?.closedBy === seat ? round.result : null;
+      // Bagian bonus dari cekih dipisah supaya tampil di baris sendiri.
+      const cekihBonus = result && result.cekihTarget !== null ? -result.cekihPenalty : 0;
       return {
         melds: [...round.table[seat], ...arrangement.melds],
         meldValues: [...round.table[seat], ...arrangement.melds].map((meld) => meldValue(meld, round.jokerRank)),
         leftover: arrangement.leftover,
         leftoverValues: arrangement.leftover.map((card) => loneValue(card, round.jokerRank)),
         penalty: round.penalties[seat],
-        bonus: viaCekih ? 0 : closed,
-        cekihBonus: viaCekih ? closed : 0,
+        bonus: (result?.bonus ?? 0) - cekihBonus,
+        fromHand: result?.fromHand ?? false,
+        cekihBonus,
         cekihPenalty: cekihPenaltyOf(round, seat),
         score: scores[seat],
       };

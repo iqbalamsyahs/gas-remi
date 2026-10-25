@@ -41,22 +41,22 @@ function closingRound(): RoundState {
   });
 }
 
-test("tutup biasa with cekih: closer gets +10x closing card and target gets -10x", () => {
+test("tutup biasa with cekih: closer gets the tutup bonus plus +10x cekih, target gets -10x", () => {
   const picked = pickFromDiscard(closingRound(), 0, c("8H"), [c("8S"), c("8C")], []);
   const closed = discardCard(picked, 0, c("KD"));
   expect(closed.result?.closedBy).toBe(0);
-  expect(closed.result?.bonus).toBe(100);
+  expect(closed.result?.bonus).toBe(200);
   expect(closed.result?.cekihTarget).toBe(2);
   expect(closed.result?.cekihPenalty).toBe(-100);
   expect(closed.penalties[2]).toBe(0);
 });
 
-test("tutup biasa without taking from the target: no bonus and no penalty", () => {
+test("tutup biasa without taking from the target: only the tutup bonus, no cekih penalty", () => {
   const s = closingRound();
   const withoutTarget = { ...s, discardOwner: { "8H": 1, KD: 3 } as RoundState["discardOwner"] };
   const picked = pickFromDiscard(withoutTarget, 0, c("8H"), [c("8S"), c("8C")], []);
   const closed = discardCard(picked, 0, c("KD"));
-  expect(closed.result?.bonus).toBe(0);
+  expect(closed.result?.bonus).toBe(100);
   expect(closed.result?.cekihTarget).toBeNull();
   expect(closed.penalties[2]).toBe(0);
 });
@@ -83,7 +83,7 @@ test("two players cekih the same target: only the closer's cekih counts", () => 
   expect(closed.penalties[2]).toBe(0);
 });
 
-test("tutup tangan after an earlier pickup this round gets no 250 and no cekih effect", () => {
+test("closing from stock after an earlier pickup is tutup biasa: no 250 and no cekih effect", () => {
   // Pernah mengambil dari buangan di giliran sebelumnya, lalu menutup dengan kartu dari cangkulan.
   const s = round({
     hands: [["2H", "3H", "4H", "9S", "9C", "9D"].map(c), [], [], []],
@@ -97,6 +97,7 @@ test("tutup tangan after an earlier pickup this round gets no 250 and no cekih e
   const drawn = { ...s, hands: [[...s.hands[0], c("KD")], [], [], []], stock: [], phase: "discard" as const, drewFrom: "stock" as const };
   const closed = discardCard(drawn, 0, c("KD"));
   expect(closed.result?.closedBy).toBe(0);
-  expect(closed.result?.bonus).toBe(0);
+  expect(closed.result?.bonus).toBe(100);
+  expect(closed.result?.fromHand).toBe(false);
   expect(closed.result?.cekihTarget).toBeNull();
 });

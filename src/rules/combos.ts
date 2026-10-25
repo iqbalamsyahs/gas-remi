@@ -21,6 +21,25 @@ export function classify(cards: Card[], jokerRank: Rank | null): Classification 
   return classifyTris(cards, real) ?? classifySeri(cards, real, isJoker) ?? INVALID;
 }
 
+// Urutan tampil kombinasi: seri dari angka terkecil dengan joker di posisi yang digantikannya,
+// tris dengan joker di belakang. Kartu yang bukan kombinasi sah dikembalikan apa adanya.
+export function orderMeld(cards: Card[], jokerRank: Rank | null): Card[] {
+  const isJoker = (card: Card) => jokerRank !== null && card.rank === jokerRank;
+  const real = cards.filter((card) => !isJoker(card));
+  const jokers = cards.filter(isJoker);
+  const kind = classify(cards, jokerRank).kind;
+  if (kind === "tris") return [...real, ...jokers];
+  if (kind !== "seri") return cards;
+  for (const range of [LOW_RANGE, HIGH_RANGE]) {
+    for (let start = 0; start + cards.length <= range.length; start++) {
+      const window = range.slice(start, start + cards.length);
+      if (!real.every((card) => window.includes(card.rank))) continue;
+      return window.map((rank) => real.find((card) => card.rank === rank) ?? (jokers.shift() as Card));
+    }
+  }
+  return cards;
+}
+
 function classifyTris(cards: Card[], real: Card[]): Classification | null {
   // Tris wajib punya minimal satu kartu asli; tiga joker sejenis tidak sah.
   if (real.length < 1) return null;

@@ -12,6 +12,8 @@ export interface RoundResult {
   // Pemain tercekih yang kena hukuman, dan nilainya (negatif). Null/0 jika tidak ada.
   cekihTarget: PlayerId | null;
   cekihPenalty: number;
+  // Tutup tangan: penutup tidak pernah mengambil dari buangan di ronde ini.
+  fromHand: boolean;
 }
 
 export interface Cekih {
@@ -41,6 +43,7 @@ export interface RoundState {
 const CLOSED_FROM_STOCK_BONUS = 250;
 const CLOSED_FROM_STOCK_JOKER_BONUS = 500;
 const CEKIH_MULTIPLIER = 10;
+const CLOSED_MULTIPLIER = 10;
 const JOKER_PENALTY_MULTIPLIER = 10;
 const NEXT_SEAT_COUNT = 4;
 
@@ -142,7 +145,7 @@ export function discardCard(state: RoundState, player: PlayerId, card: Card): Ro
   // Hukuman cekih disimpan di result, terpisah dari penalti joker.
   if (closed) return { ...next, result: closed };
   if (state.stock.length === 0) {
-    return { ...next, result: { closedBy: "stock_empty", bonus: 0, closingCard: null, cekihTarget: null, cekihPenalty: 0 } };
+    return { ...next, result: { closedBy: "stock_empty", bonus: 0, closingCard: null, cekihTarget: null, cekihPenalty: 0, fromHand: false } };
   }
   return {
     ...next,
@@ -162,15 +165,23 @@ export function checkClosed(state: RoundState, player: PlayerId, card: Card): Ro
   if (!state.pickedFromDiscard[player]) {
     const isJoker = state.jokerRank !== null && card.rank === state.jokerRank;
     const bonus = isJoker ? CLOSED_FROM_STOCK_JOKER_BONUS : CLOSED_FROM_STOCK_BONUS;
-    return { closedBy: player, bonus, closingCard: card, cekihTarget: null, cekihPenalty: 0 };
+    return { closedBy: player, bonus, closingCard: card, cekihTarget: null, cekihPenalty: 0, fromHand: true };
   }
-  // Tutup biasa: bonus dan hukuman hanya lewat cekih yang cocok.
+  // Tutup biasa: bonus 10x nilai kartu penutup, ditambah bonus cekih kalau ada cekih yang cocok.
+  const closedBonus = CLOSED_MULTIPLIER * baseValue(card.rank);
   const target = matchingCekihTarget(state, player);
   if (target === null) {
-    return { closedBy: player, bonus: 0, closingCard: card, cekihTarget: null, cekihPenalty: 0 };
+    return { closedBy: player, bonus: closedBonus, closingCard: card, cekihTarget: null, cekihPenalty: 0, fromHand: false };
   }
   const amount = CEKIH_MULTIPLIER * baseValue(card.rank);
-  return { closedBy: player, bonus: amount, closingCard: card, cekihTarget: target, cekihPenalty: -amount };
+  return {
+    closedBy: player,
+    bonus: closedBonus + amount,
+    closingCard: card,
+    cekihTarget: target,
+    cekihPenalty: -amount,
+    fromHand: false,
+  };
 }
 
 // Pemain penutup harus punya cekih aktif ke pemain yang kartunya ikut diambil pada giliran ini.
