@@ -190,6 +190,8 @@ export function Table({ view, error, onIntent }: TableProps) {
   const discardPhase = board?.phase === "discard";
   // Pembukaan memakai status "opening", permainan memakai "playing". Keduanya boleh bertindak saat gilirannya.
   const playable = board !== null && (view.status === "opening" || view.status === "playing") && myTurn;
+  // Kursi yang sedang giliran, untuk ditandai di layar semua pemain. Null di luar pembukaan dan permainan.
+  const activeSeat = board !== null && (view.status === "opening" || view.status === "playing") ? board.turn : null;
 
   // Kartu yang baru masuk ke tangan selama giliranmu (dari cangkulan atau buangan), ditandai sampai giliran selesai.
   // Tangan yang diganti seluruhnya (ronde baru dibagikan) dan kartu di pembukaan tidak ditandai.
@@ -212,11 +214,22 @@ export function Table({ view, error, onIntent }: TableProps) {
     soundsFor(prevView.current, view).forEach(playSound);
     prevView.current = view;
   }, [view]);
-  // Pengingat giliran. Timer mulai ulang setiap ada update, jadi hanya berbunyi kalau giliran didiamkan.
+  // Pengingat giliran. Timer mulai ulang setiap ada update atau aktivitas pemain (klik, sentuh, tombol),
+  // jadi hanya berbunyi kalau giliran benar-benar didiamkan.
   useEffect(() => {
     if (!playable) return;
-    const timer = setTimeout(() => playSound("turn"), TURN_REMINDER_MS);
-    return () => clearTimeout(timer);
+    let timer = setTimeout(() => playSound("turn"), TURN_REMINDER_MS);
+    const restart = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => playSound("turn"), TURN_REMINDER_MS);
+    };
+    window.addEventListener("pointerdown", restart);
+    window.addEventListener("keydown", restart);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("pointerdown", restart);
+      window.removeEventListener("keydown", restart);
+    };
   }, [playable, view]);
   const scoringPhase = view.status === "scoring" && view.scoring !== null;
   const tutupTangan = board?.result?.fromHand ?? false;
@@ -450,7 +463,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       <section className={styles.opponents}>
         {view.handCounts.map((count, seat) =>
           seat === view.you ? null : (
-            <div key={seat} className={styles.opponent}>
+            <div key={seat} className={`${styles.opponent} ${seat === activeSeat ? styles.active : ""}`}>
               <div className={styles.playerRow}>
                 <Avatar info={view.players[seat]} />
                 <strong>{nameOf(seat)}</strong>
@@ -605,7 +618,7 @@ export function Table({ view, error, onIntent }: TableProps) {
           </div>
         </section>
       ) : (
-        <section className={styles.hand}>
+        <section className={`${styles.hand} ${playable ? styles.active : ""}`}>
           <div className={styles.label}>
             Kartumu{" "}
             <button type="button" className={styles.tool} onClick={() => setOrder([...view.hand].sort(bySuitThenRank).map((card) => card.id))}>

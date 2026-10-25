@@ -823,6 +823,25 @@
   border-radius: 10px;
 }
 
+/* Pemain yang sedang giliran: bingkai emas yang berdenyut. */
+.active {
+  border-radius: 10px;
+  box-shadow: 0 0 0 2px #ffc107;
+  animation: activePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes activePulse {
+  50% {
+    box-shadow: 0 0 0 2px #ffc107, 0 0 16px 4px rgb(255 193 7 / 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .active {
+    animation: none;
+  }
+}
+
 .opponentCount {
   font-size: 0.8em;
   opacity: 0.8;
