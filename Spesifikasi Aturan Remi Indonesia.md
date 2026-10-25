@@ -97,6 +97,7 @@ Membuang joker boleh, tapi pembuangnya langsung dikurangi 10× nilai kartu joker
 - Semua kartu buangan sebelum joker itu terblokir dan tidak bisa diambil lagi oleh siapa pun.
 - Kartu yang dibuang setelahnya bisa diambil seperti biasa (tetap dalam batas 7 kartu dari ujung).
 - Aturan yang sama berlaku untuk kartu joker yang terbuang di putaran pertama.
+- Pengecualian: pemain yang mengambil kartu terakhir dari cangkulan boleh membuang joker tanpa penalti.
 
 ## Akhir ronde & perhitungan skor
 
@@ -110,6 +111,8 @@ Ronde berakhir dengan salah satu dari dua cara: ada pemain yang closed, atau can
 | Cara closed | Bonus untuk pemain yang closed |
 | --- | --- |
 | Mengambil dari cangkulan | +250 |
+| Mengambil dari cangkulan, kartu penutupnya joker | +500 (tanpa penalti buang joker) |
+| Pernah mengambil dari buangan (tutup biasa) | +10× nilai kartu penutup, ditambah bonus cekih jika cocok |
 
 **Cekih**
 

@@ -15,14 +15,18 @@ export type PublicCard = Card | HiddenCard;
 
 export interface RevealedHand {
   seat: number;
-  cards: Card[];
+  // Dikelompokkan sesuai susunan penutup: kombinasi dulu, sisa kartu (jika ada) sebagai kelompok terakhir.
+  groups: Card[][];
 }
 
 // Tangan pemain penutup (tutup atau tutup tangan) ditampilkan ke semua pemain. Null jika tidak ada penutup.
-export function revealedCloser(board: Board | null): RevealedHand | null {
+export function revealedCloser(board: Board | null, arrangements: Arrangement[] | null): RevealedHand | null {
   if (board === null || board.result === null || typeof board.result.closedBy !== "number") return null;
   const seat = board.result.closedBy;
-  return { seat, cards: board.hands[seat] };
+  const arrangement = arrangements?.[seat];
+  if (!arrangement) return { seat, groups: [board.hands[seat]] };
+  const groups = arrangement.leftover.length > 0 ? [...arrangement.melds, arrangement.leftover] : arrangement.melds;
+  return { seat, groups };
 }
 
 export function maskDiscard(cards: Card[], jokerRank: Rank | null): PublicCard[] {
@@ -105,7 +109,7 @@ export function viewFor(room: Room, seat: PlayerId | null): PlayerView {
     lastRoundScores: room.lastRoundScores,
     roundDetail: room.roundDetail,
     history: room.history,
-    revealed: room.status === "scoring" ? revealedCloser(board) : null,
+    revealed: room.status === "scoring" ? revealedCloser(board, room.scoringArrangement) : null,
     scoring:
       room.status === "scoring"
         ? { confirmed: [...room.scoringConfirmed], mine: seat === null ? null : room.scoringArrangement?.[seat] ?? null }

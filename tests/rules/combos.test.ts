@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card, Rank } from "../../src/rules/cards";
-import { classify } from "../../src/rules/combos";
+import { classify, orderMeld } from "../../src/rules/combos";
 
 function c(id: string): Card {
   return { id, rank: id.slice(0, -1) as Rank, suit: id.slice(-1) as Card["suit"] };
@@ -56,4 +56,10 @@ test("joker cannot be used as its own real card", () => {
 test("three jokers of one rank cannot form a tris", () => {
   const r = classify([c("10S"), c("10H"), c("10D")], "10");
   expect(r.kind).toBe("invalid");
+});
+
+test("orderMeld sorts a seri and puts the joker where it fills in", () => {
+  const ids = (cards: Card[]) => cards.map((card) => card.id);
+  expect(ids(orderMeld([c("7D"), c("AC"), c("10D"), c("8D")], "A"))).toEqual(["7D", "8D", "AC", "10D"]);
+  expect(ids(orderMeld([c("5S"), c("8S"), c("8H")], "5"))).toEqual(["8S", "8H", "5S"]);
 });

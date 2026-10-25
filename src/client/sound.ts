@@ -48,7 +48,13 @@ interface Tone {
 }
 
 const TONES: Record<Sound, Tone[]> = {
-  turn: [{ freq: 660, ms: 140 }, { freq: 990, ms: 220 }],
+  // Alarm keras sebelum suara "Main woy!!!".
+  turn: [
+    { freq: 880, ms: 120, type: "square", gain: 0.3 },
+    { freq: 1175, ms: 120, type: "square", gain: 0.3 },
+    { freq: 880, ms: 120, type: "square", gain: 0.3 },
+    { freq: 1175, ms: 180, type: "square", gain: 0.3 },
+  ],
   cekih: [
     { freq: 440, ms: 130, type: "square", gain: 0.12 },
     { freq: 0, ms: 70 },
@@ -146,11 +152,34 @@ function schedule(ctx: AudioContext, tones: Tone[], at: number, destination: Aud
   }
 }
 
-// Nada dibuat langsung dengan Web Audio, tanpa file audio. Browser baru mengizinkan suara setelah pemain klik halaman.
+// Rekaman suara giliran, diputar setelah alarm. Dimuat sekali lalu disimpan.
+const TURN_VOICE_URL = "/main-woy.wav";
+let turnVoice: Promise<AudioBuffer | null> | null = null;
+
+function loadTurnVoice(ctx: AudioContext): Promise<AudioBuffer | null> {
+  turnVoice ??= fetch(TURN_VOICE_URL)
+    .then((res) => res.arrayBuffer())
+    .then((data) => ctx.decodeAudioData(data))
+    .catch(() => null);
+  return turnVoice;
+}
+
+// Nada dibuat langsung dengan Web Audio. Browser baru mengizinkan suara setelah pemain klik halaman.
 export function playSound(sound: Sound): void {
   if (isMuted()) return;
   const ctx = audio();
-  if (ctx !== null) schedule(ctx, TONES[sound], ctx.currentTime, ctx.destination);
+  if (ctx === null) return;
+  const start = ctx.currentTime;
+  schedule(ctx, TONES[sound], start, ctx.destination);
+  if (sound !== "turn") return;
+  const voiceAt = start + TONES.turn.reduce((sum, tone) => sum + tone.ms, 0) / 1000;
+  void loadTurnVoice(ctx).then((buffer) => {
+    if (buffer === null) return;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(Math.max(voiceAt, ctx.currentTime));
+  });
 }
 
 // Browser menahan suara sampai pemain klik halaman. Nada yang sudah dijadwalkan baru terdengar setelah resumeAudio.

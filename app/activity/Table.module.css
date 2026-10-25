@@ -251,6 +251,18 @@
   cursor: default;
 }
 
+.pickable .card {
+  box-shadow: 0 0 0 3px #4ade80;
+}
+
+.pickable .card:disabled {
+  opacity: 1;
+}
+
+.blocked .card:disabled {
+  opacity: 0.35;
+}
+
 .red {
   color: #c1121f;
 }
