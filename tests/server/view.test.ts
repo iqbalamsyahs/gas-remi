@@ -31,11 +31,17 @@ function boardWith(closedBy: number | "stock_empty" | null): Board {
 }
 
 test("on a closing, the closer's whole hand is revealed to everyone", () => {
-  const revealed = revealedCloser(boardWith(1));
-  expect(revealed).toEqual({ seat: 1, cards: [c("7C"), c("KD")] });
+  const revealed = revealedCloser(boardWith(1), null);
+  expect(revealed).toEqual({ seat: 1, groups: [[c("7C"), c("KD")]] });
+});
+
+test("the revealed hand follows the closer's arrangement", () => {
+  const arrangement = { melds: [[c("KD")]], leftover: [c("7C")] };
+  const revealed = revealedCloser(boardWith(1), [arrangement, arrangement, arrangement, arrangement]);
+  expect(revealed).toEqual({ seat: 1, groups: [[c("KD")], [c("7C")]] });
 });
 
 test("no reveal when the round has no closer", () => {
-  expect(revealedCloser(boardWith(null))).toBeNull();
-  expect(revealedCloser(boardWith("stock_empty"))).toBeNull();
+  expect(revealedCloser(boardWith(null), null)).toBeNull();
+  expect(revealedCloser(boardWith("stock_empty"), null)).toBeNull();
 });

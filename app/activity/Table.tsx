@@ -144,6 +144,8 @@ function Avatar({ info, size = 22 }: { info: PlayerInfo; size?: number }) {
   return <img className={styles.avatar} src={info.avatarUrl} alt="" width={size} height={size} />;
 }
 
+const TUTUP_TANGAN_NOTICE = "Ada yang tutup tangan: kartu semua pemain tidak dihitung, kecuali penalti joker.";
+
 function Melds({ melds }: { melds: Card[][] }) {
   return (
     <div className={styles.row}>
@@ -216,6 +218,8 @@ export function Table({ view, error, onIntent }: TableProps) {
     return () => clearTimeout(timer);
   }, [playable, view]);
   const scoringPhase = view.status === "scoring" && view.scoring !== null;
+  // Tutup tangan: penutup dapat bonus tanpa cekih (tutup biasa hanya dapat bonus lewat cekih).
+  const tutupTangan = !!board?.result && board.result.bonus > 0 && board.result.cekihTarget === null;
   const emptySeats = view.seats.filter((seat) => seat === "").length;
   const nameOf = (seat: number) => view.players[seat]?.name ?? `P${seat + 1}`;
   // Penonton tidak punya kursi: tanpa tangan dan tanpa aksi.
@@ -412,6 +416,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       {scoringPhase && (
         <p className={styles.notice}>
           Ronde selesai. {myConfirmed || spectator ? `Menunggu konfirmasi dari ${waiting}.` : "Susun kombinasimu lalu konfirmasi."}
+          {tutupTangan && ` ${TUTUP_TANGAN_NOTICE}`}
         </p>
       )}
       {view.status === "waiting" && (
@@ -427,11 +432,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       {view.revealed !== null && view.status === "scoring" && (
         <section className={styles.detail}>
           <div className={styles.label}>Tangan {nameOf(view.revealed.seat)} (penutup), bisa dicek semua pemain</div>
-          <div className={styles.row}>
-            {view.revealed.cards.map((card) => (
-              <CardFace key={card.id} card={card} disabled />
-            ))}
-          </div>
+          <Melds melds={view.revealed.groups} />
         </section>
       )}
       {error && <p className={styles.error}>{error}</p>}
@@ -464,15 +465,19 @@ export function Table({ view, error, onIntent }: TableProps) {
       <section className={styles.middle}>
         <div className={styles.pile}>
           <div className={styles.label}>Cangkulan</div>
-          <button
-            type="button"
-            className={`${styles.deck} ${canDraw ? styles.deckReady : ""}`}
-            disabled={!canDraw}
-            aria-label="Ambil kartu dari cangkulan"
-            onClick={() => send(inOpening ? { type: "opening_draw" } : { type: "draw_stock" })}
-          >
-            <span className={styles.deckCount}>{board?.stockCount ?? 0}</span>
-          </button>
+          {(board?.stockCount ?? 0) > 0 ? (
+            <button
+              type="button"
+              className={`${styles.deck} ${canDraw ? styles.deckReady : ""}`}
+              disabled={!canDraw}
+              aria-label="Ambil kartu dari cangkulan"
+              onClick={() => send(inOpening ? { type: "opening_draw" } : { type: "draw_stock" })}
+            >
+              <span className={styles.deckCount}>{board?.stockCount ?? 0}</span>
+            </button>
+          ) : (
+            <div className={styles.label}>Habis</div>
+          )}
           {canDraw && <div className={styles.label}>Klik untuk ambil</div>}
         </div>
 
@@ -667,6 +672,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       {panel === "result" && view.roundDetail !== null && (
         <Modal title="Hasil ronde terakhir" onClose={() => setPanel(null)}>
         <section className={styles.detail}>
+          {view.roundDetail.some((detail) => detail.bonus > 0) && <p className={styles.notice}>{TUTUP_TANGAN_NOTICE}</p>}
           <div className={styles.resultGrid}>
             {view.roundDetail.map((detail, seat) => (
               <div key={seat} className={styles.resultSeat}>

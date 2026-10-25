@@ -3,7 +3,7 @@ import { canCallCekih } from "./cekih";
 import type { PlayerId } from "./opening";
 import { canPartition, removeCards } from "./partition";
 import { subsets } from "./subsets";
-import { hasPureSeri } from "./scoring";
+import { canUseMelds, handArrangement, hasPureSeri } from "./scoring";
 import { layDownPureSeri, pickFromDiscard, type RoundState } from "./turn";
 
 // Bentuk intent yang sama dengan intent pemain di server. Disimpan di sini supaya strategi bot tidak bergantung server.
@@ -71,6 +71,13 @@ function discardChoice(round: RoundState, seat: PlayerId): BotIntent {
     return canPartition(rest, round.jokerRank) && (round.laidPureSeri[seat] || hasPureSeri(rest, round.jokerRank));
   });
   if (closing) return { type: "discard", cardId: closing.id };
+
+  // Kartu terakhir cangkulan: buang joker gratis tanpa penalti, pilih joker yang tidak terpakai di kombinasi.
+  if (round.drewFrom === "stock" && round.stock.length === 0) {
+    const allowMelds = canUseMelds(hand, round.laidPureSeri[seat], round.jokerRank);
+    const spare = handArrangement(hand, round.jokerRank, allowMelds).leftover.find((card) => isJoker(card, round.jokerRank));
+    if (spare) return { type: "discard", cardId: spare.id };
+  }
 
   const threats = round.cekih.filter((c) => c.target === seat).map((c) => c.caller);
   const nonJoker = hand.filter((card) => !isJoker(card, round.jokerRank));

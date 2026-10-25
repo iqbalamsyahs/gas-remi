@@ -39,6 +39,7 @@ export interface RoundState {
 }
 
 const CLOSED_FROM_STOCK_BONUS = 250;
+const CLOSED_FROM_STOCK_JOKER_BONUS = 500;
 const CEKIH_MULTIPLIER = 10;
 const JOKER_PENALTY_MULTIPLIER = 10;
 const NEXT_SEAT_COUNT = 4;
@@ -118,7 +119,12 @@ export function discardCard(state: RoundState, player: PlayerId, card: Card): Ro
   const hand = removeCards(state.hands[player], [card]);
   const penalties = [...state.penalties];
   const isJoker = state.jokerRank !== null && card.rank === state.jokerRank;
-  if (isJoker) penalties[player] -= JOKER_PENALTY_MULTIPLIER * baseValue(card.rank);
+  const closed = checkClosed(state, player, card);
+  // Tutup tangan dengan joker sudah dihargai lewat bonus 500, jadi joker penutup itu tidak kena penalti.
+  const jokerClosing = isJoker && closed?.bonus === CLOSED_FROM_STOCK_JOKER_BONUS;
+  // Pemain yang mengambil kartu terakhir dari cangkulan boleh membuang joker tanpa penalti.
+  const lastFromStock = state.drewFrom === "stock" && state.stock.length === 0;
+  if (isJoker && !jokerClosing && !lastFromStock) penalties[player] -= JOKER_PENALTY_MULTIPLIER * baseValue(card.rank);
 
   const discard: DiscardPile = {
     cards: [...state.discard.cards, card],
@@ -133,7 +139,6 @@ export function discardCard(state: RoundState, player: PlayerId, card: Card): Ro
     takenOwners: [],
   };
 
-  const closed = checkClosed(state, player, card);
   // Hukuman cekih disimpan di result, terpisah dari penalti joker.
   if (closed) return { ...next, result: closed };
   if (state.stock.length === 0) {
@@ -153,9 +158,11 @@ export function checkClosed(state: RoundState, player: PlayerId, card: Card): Ro
   if (!canPartition(rest, state.jokerRank)) return null;
   // Menutup (tutup atau tutup tangan) harus punya seri murni: sudah diturunkan, atau ada di tangan.
   if (!state.laidPureSeri[player] && !hasPureSeri(rest, state.jokerRank)) return null;
-  // Tutup tangan: tidak pernah mengambil dari buangan di ronde ini. Bonus 250, tanpa efek cekih.
+  // Tutup tangan: tidak pernah mengambil dari buangan di ronde ini. Bonus 250 (500 jika penutupnya joker), tanpa efek cekih.
   if (!state.pickedFromDiscard[player]) {
-    return { closedBy: player, bonus: CLOSED_FROM_STOCK_BONUS, closingCard: card, cekihTarget: null, cekihPenalty: 0 };
+    const isJoker = state.jokerRank !== null && card.rank === state.jokerRank;
+    const bonus = isJoker ? CLOSED_FROM_STOCK_JOKER_BONUS : CLOSED_FROM_STOCK_BONUS;
+    return { closedBy: player, bonus, closingCard: card, cekihTarget: null, cekihPenalty: 0 };
   }
   // Tutup biasa: bonus dan hukuman hanya lewat cekih yang cocok.
   const target = matchingCekihTarget(state, player);

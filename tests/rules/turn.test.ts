@@ -111,6 +111,32 @@ test("closed from stock gives +250", () => {
   expect(out.result).toEqual({ closedBy: 0, bonus: 250, closingCard: c("KC"), cekihTarget: null, cekihPenalty: 0 });
 });
 
+test("tutup tangan with a joker as the closing card gives +500 and no joker penalty", () => {
+  const s = round({
+    hands: [[c("3H"), c("4H"), c("5H"), c("8S"), c("8H"), c("8D"), c("8C"), c("KC")], [], [], []],
+    jokerRank: "K",
+    phase: "discard",
+    drewFrom: "stock",
+    stock: [c("2D")],
+  });
+  const out = discardCard(s, 0, c("KC"));
+  expect(out.result?.bonus).toBe(500);
+  expect(out.penalties[0]).toBe(0);
+});
+
+test("discarding a joker after drawing the last stock card has no penalty", () => {
+  const s = round({
+    hands: [[c("2H"), c("KS")], [], [], []],
+    jokerRank: "K",
+    phase: "discard",
+    drewFrom: "stock",
+    stock: [],
+  });
+  const out = discardCard(s, 0, c("KS"));
+  expect(out.penalties[0]).toBe(0);
+  expect(out.result?.closedBy).toBe("stock_empty");
+});
+
 // Bonus tutup biasa sekarang hanya lewat cekih (lihat cekih-closing.test.ts). Tanpa cekih, bonus 0.
 test("closed after a discard pickup without cekih gives no bonus", () => {
   const s = round({
