@@ -53,11 +53,14 @@ export type Intent =
   | { type: "confirm"; melds: string[][] }
   // Hanya sebelum ronde pertama selesai. Target 100 sampai 5000.
   | { type: "set_target"; target: number }
+  // Lanjutkan game: room master mengisi poin terakhir tiap kursi, hanya sebelum ada yang mengambil kartu.
+  | { type: "set_totals"; totals: number[] }
   // Saat menunggu pemain: isi semua kursi kosong dengan bot.
   | { type: "add_bots" };
 
 export const TARGET_MIN = 100;
 export const TARGET_MAX = 5000;
+export const TOTALS_LIMIT = 100_000;
 
 // Skor satu ronde untuk ditampilkan sebagai riwayat. Totals adalah skor total setelah ronde itu.
 export interface HistoryEntry {
@@ -290,8 +293,9 @@ export class Room {
     if (this.status === "paused") throw new Error("PAUSED");
     if (this.status === "cancelled" || this.status === "finished") throw new Error("ROOM_CLOSED");
     if (this.status === "waiting" && intent.type === "add_bots") this.addBots();
-    else if (this.status === "waiting" && intent.type !== "set_target") throw new Error("ROOM_NOT_STARTED");
+    else if (this.status === "waiting" && intent.type !== "set_target" && intent.type !== "set_totals") throw new Error("ROOM_NOT_STARTED");
     else if (intent.type === "set_target") this.setTarget(intent.target);
+    else if (intent.type === "set_totals") this.setTotals(seat, intent.totals);
     else if (this.status === "scoring") this.handleScoring(seat, intent);
     else if (this.status === "opening") this.handleOpening(seat, intent);
     else this.handlePlay(seat, intent);
@@ -417,7 +421,7 @@ export class Room {
   }
 
   private startPlaying(): void {
-    const resolved = resolveJoker(this.opening!, this.rng);
+    const resolved = resolveJoker(this.opening!, this.rng, this.firstPlayer);
     this.round = {
       hands: resolved.hands,
       stock: resolved.stock,
@@ -460,6 +464,26 @@ export class Room {
     if (this.session.rounds > 0) throw new Error("TARGET_LOCKED");
     if (!Number.isInteger(target) || target < TARGET_MIN || target > TARGET_MAX) throw new Error("INVALID_TARGET");
     this.session = { ...this.session, target };
+  }
+
+  // Poin awal dari game sebelumnya. Pemain pertama ikut dihitung ulang dari poin tertinggi.
+  private setTotals(seat: PlayerId, totals: number[]): void {
+    if (!this.canSetTotals(seat)) throw new Error("TOTALS_LOCKED");
+    const valid =
+      Array.isArray(totals) &&
+      totals.length === 4 &&
+      totals.every((total) => Number.isInteger(total) && Math.abs(total) <= TOTALS_LIMIT);
+    if (!valid) throw new Error("INVALID_TOTALS");
+    this.session = { ...this.session, totals: [...totals] };
+    this.firstPlayer = nextFirstPlayer(totals);
+  }
+
+  // Room master, sebelum ronde pertama dan sebelum ada yang mengambil kartu di pembukaan.
+  canSetTotals(seat: PlayerId | null): boolean {
+    if (seat === null || !this.canReset(seat) || this.session.rounds > 0) return false;
+    if (this.status === "waiting") return true;
+    const o = this.opening;
+    return this.status === "opening" && o !== null && o.discard.cards.length === 0 && o.hands.every((h) => h.length === HAND_SIZE);
   }
 
   private handleScoring(seat: PlayerId, intent: Intent): void {

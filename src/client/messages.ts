@@ -46,6 +46,8 @@ const MESSAGES: Record<string, string> = {
   CEKIH_TARGET_NOT_ALLOWED: "Cekih hanya bisa ke pemain sebelummu dan sebelumnya lagi.",
 
   // Reset
+  TOTALS_LOCKED: "Poin hanya bisa diisi room master sebelum ada yang mengambil kartu.",
+  INVALID_TOTALS: "Poin harus bilangan bulat antara -100000 dan 100000.",
   RESET_NOT_ALLOWED: "Hanya pemain manusia di kursi paling awal yang bisa mereset game.",
 
   // Target

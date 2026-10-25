@@ -67,6 +67,8 @@ export interface PlayerView {
   canSit: boolean;
   // Penerima ini boleh reset game (pemain manusia di kursi paling awal, atau penonton kalau tidak ada manusia).
   canReset: boolean;
+  // Room master boleh mengisi poin terakhir (lanjutkan game) sebelum ada yang mengambil kartu.
+  canSetTotals: boolean;
   seats: string[];
   target: number;
   totals: number[];
@@ -132,6 +134,7 @@ export function viewFor(room: Room, seat: PlayerId | null): PlayerView {
     hand: board && seat !== null ? board.hands[seat] : [],
     canSit: room.canSit(),
     canReset: room.canReset(seat),
+    canSetTotals: room.canSetTotals(seat),
     handCounts: board ? board.hands.map((hand) => hand.length) : [0, 0, 0, 0],
   };
 }
