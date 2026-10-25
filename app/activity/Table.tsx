@@ -498,7 +498,7 @@ export function Table({ view, error, onIntent }: TableProps) {
                 </button>
               ) : (
                 // Tanda baru muncul setelah joker ditentukan (putaran pertama selesai).
-                <span key={card.id} className={inOpening ? undefined : pickable ? styles.pickable : styles.blocked}>
+                <span key={card.id} className={!inOpening && pickable ? styles.pickable : undefined}>
                   <CardFace
                     card={card}
                     selected={pickupTarget === card.id || pickupExtra.includes(card.id)}
