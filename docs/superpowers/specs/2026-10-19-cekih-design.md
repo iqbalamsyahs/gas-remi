@@ -47,7 +47,7 @@ Syarat cekih dicek lagi saat penutupan, bersama syarat tutup yang sudah ada (tan
 Bonus dan hukuman hanya terjadi jika penutupan adalah **tutup biasa** dan semua syarat berikut terpenuhi:
 
 1. Pemain penutup memiliki cekih aktif ke pemain T.
-2. Kartu yang diambil dari buangan pada giliran penutupan termasuk kartu yang dibuang T.
+2. Kartu buangan yang dipakai membentuk kombinasi pada giliran penutupan termasuk kartu yang dibuang T. Kartu di atasnya yang hanya masuk tangan tidak dihitung (revisi 25 Okt 2026).
 
 Kalau kedua syarat terpenuhi:
 - Pemain penutup mendapat **+10× nilai kartu penutup**.

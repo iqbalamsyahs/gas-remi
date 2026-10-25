@@ -482,7 +482,7 @@ export function Table({ view, error, onIntent }: TableProps) {
         </div>
 
         <div className={styles.discard}>
-          <div className={styles.label}>Buangan (kartu bertanda hijau bisa diambil)</div>
+          <div className={styles.label}>{inOpening ? "Buangan" : "Buangan (kartu bertanda kuning bisa diambil)"}</div>
           {pickupTarget !== null && (
             <div className={styles.label}>Kartu di atas target boleh ikut dibentuk jadi kombinasi. Klik untuk memilih.</div>
           )}
@@ -497,7 +497,8 @@ export function Table({ view, error, onIntent }: TableProps) {
                   ?
                 </button>
               ) : (
-                <span key={card.id} className={pickable ? styles.pickable : styles.blocked}>
+                // Tanda baru muncul setelah joker ditentukan (putaran pertama selesai).
+                <span key={card.id} className={inOpening ? undefined : pickable ? styles.pickable : styles.blocked}>
                   <CardFace
                     card={card}
                     selected={pickupTarget === card.id || pickupExtra.includes(card.id)}

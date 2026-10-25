@@ -101,3 +101,12 @@ test("closing from stock after an earlier pickup is tutup biasa: no 250 and no c
   expect(closed.result?.fromHand).toBe(false);
   expect(closed.result?.cekihTarget).toBeNull();
 });
+
+test("a cekih target's card that only goes into the hand does not trigger cekih", () => {
+  // KD milik D (3) ada di atas 8H dan ikut terambil, tapi tidak masuk kombinasi. Hanya bonus tutup.
+  const s = { ...closingRound(), cekih: [{ caller: 0 as const, target: 3 as const }] };
+  const picked = pickFromDiscard(s, 0, c("8H"), [c("8S"), c("8C")], []);
+  const closed = discardCard(picked, 0, c("KD"));
+  expect(closed.result?.cekihTarget).toBeNull();
+  expect(closed.result?.bonus).toBe(100);
+});

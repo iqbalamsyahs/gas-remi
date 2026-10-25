@@ -37,6 +37,8 @@ export interface RoundState {
   cekih: Cekih[];
   discardOwner: Record<string, PlayerId>;
   pickedFromDiscard: boolean[];
+  // Pemilik kartu buangan yang masuk kombinasi pada giliran ini (target dan kartu di atasnya yang ikut kombinasi).
+  // Kartu di atas target yang hanya masuk tangan tidak dihitung untuk cekih.
   takenOwners: PlayerId[];
 }
 
@@ -100,7 +102,7 @@ export function pickFromDiscard(
     phase: "discard",
     drewFrom: "discard",
     pickedFromDiscard: state.pickedFromDiscard.map((flag, seat) => (seat === player ? true : flag)),
-    takenOwners: taken.map((card) => state.discardOwner[card.id]),
+    takenOwners: [target, ...fromDiscard].map((card) => state.discardOwner[card.id]),
   };
 }
 

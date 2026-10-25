@@ -195,7 +195,7 @@ test("discarding records the discarder as owner of that card", () => {
   expect(out.discardOwner["9S"]).toBe(0);
 });
 
-test("pickup marks the player and records owners of the taken cards", () => {
+test("pickup marks the player and records owners of the discard cards used in the meld", () => {
   const s = round({
     hands: [[c("2H"), c("3H"), c("9S")], [], [], []],
     discard: { cards: [c("AD"), c("4H"), c("9C")], closedIndex: null },
@@ -204,7 +204,8 @@ test("pickup marks the player and records owners of the taken cards", () => {
   });
   const out = pickFromDiscard(s, 0, c("4H"), [c("2H"), c("3H")]);
   expect(out.pickedFromDiscard[0]).toBe(true);
-  expect(out.takenOwners).toEqual([2, 3]);
+  // 9C (milik 3) ikut terambil tapi hanya masuk tangan, jadi tidak dihitung.
+  expect(out.takenOwners).toEqual([2]);
 });
 
 test("pickup from deeper than seven cards is refused as too deep, not as blocked", () => {
