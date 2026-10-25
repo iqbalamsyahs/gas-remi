@@ -1,6 +1,7 @@
 import type { PlayerView } from "../../server/view";
 
-export type Sound = "turn" | "cekih" | "joker" | "round" | "win" | "card";
+// "reminder": pengingat berulang saat giliran didiamkan.
+export type Sound = "turn" | "reminder" | "cekih" | "joker" | "round" | "win" | "card";
 
 function myTurn(view: PlayerView): boolean {
   return (
@@ -50,6 +51,12 @@ interface Tone {
 const TONES: Record<Sound, Tone[]> = {
   // Alarm keras sebelum suara "Main woy!!!".
   turn: [
+    { freq: 880, ms: 120, type: "square", gain: 0.3 },
+    { freq: 1175, ms: 120, type: "square", gain: 0.3 },
+    { freq: 880, ms: 120, type: "square", gain: 0.3 },
+    { freq: 1175, ms: 180, type: "square", gain: 0.3 },
+  ],
+  reminder: [
     { freq: 880, ms: 120, type: "square", gain: 0.3 },
     { freq: 1175, ms: 120, type: "square", gain: 0.3 },
     { freq: 880, ms: 120, type: "square", gain: 0.3 },
@@ -152,16 +159,20 @@ function schedule(ctx: AudioContext, tones: Tone[], at: number, destination: Aud
   }
 }
 
-// Rekaman suara giliran, diputar setelah alarm. Dimuat sekali lalu disimpan.
-const TURN_VOICE_URL = "/main-woy.ogg";
-let turnVoice: Promise<AudioBuffer | null> | null = null;
+// Rekaman suara yang diputar setelah alarm: awal giliran dan pengingat. Dimuat sekali lalu disimpan.
+const VOICE_URL: Partial<Record<Sound, string>> = { turn: "/main-woy.ogg", reminder: "/lila.ogg" };
+const voices = new Map<string, Promise<AudioBuffer | null>>();
 
-function loadTurnVoice(ctx: AudioContext): Promise<AudioBuffer | null> {
-  turnVoice ??= fetch(TURN_VOICE_URL)
-    .then((res) => res.arrayBuffer())
-    .then((data) => ctx.decodeAudioData(data))
-    .catch(() => null);
-  return turnVoice;
+function loadVoice(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
+  let voice = voices.get(url);
+  if (voice === undefined) {
+    voice = fetch(url)
+      .then((res) => res.arrayBuffer())
+      .then((data) => ctx.decodeAudioData(data))
+      .catch(() => null);
+    voices.set(url, voice);
+  }
+  return voice;
 }
 
 // Nada dibuat langsung dengan Web Audio. Browser baru mengizinkan suara setelah pemain klik halaman.
@@ -171,9 +182,10 @@ export function playSound(sound: Sound): void {
   if (ctx === null) return;
   const start = ctx.currentTime;
   schedule(ctx, TONES[sound], start, ctx.destination);
-  if (sound !== "turn") return;
-  const voiceAt = start + TONES.turn.reduce((sum, tone) => sum + tone.ms, 0) / 1000;
-  void loadTurnVoice(ctx).then((buffer) => {
+  const url = VOICE_URL[sound];
+  if (url === undefined) return;
+  const voiceAt = start + TONES[sound].reduce((sum, tone) => sum + tone.ms, 0) / 1000;
+  void loadVoice(ctx, url).then((buffer) => {
     if (buffer === null) return;
     const source = ctx.createBufferSource();
     source.buffer = buffer;
