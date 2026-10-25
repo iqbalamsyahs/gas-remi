@@ -175,7 +175,9 @@ export function Table({ view, error, onIntent }: TableProps) {
   // Susunan kombinasi saat fase penyusunan. Null berarti belum diubah, jadi pakai usulan server.
   const [edit, setEdit] = useState<{ round: number; groups: string[][] } | null>(null);
   const [targetInput, setTargetInput] = useState("");
-  const [panel, setPanel] = useState<"result" | "history" | "target" | "settings" | null>(null);
+  const [panel, setPanel] = useState<"result" | "history" | "target" | "settings" | "continue" | null>(null);
+  // Isian poin terakhir per kursi untuk "Lanjutkan game".
+  const [totalsInput, setTotalsInput] = useState<string[]>([]);
   // Modal hasil ronde terbuka otomatis saat ronde baru selesai (jumlah ronde bertambah).
   const [seenRounds, setSeenRounds] = useState(view.rounds);
   if (view.rounds !== seenRounds) {
@@ -421,6 +423,21 @@ export function Table({ view, error, onIntent }: TableProps) {
           ⚙️
         </button>
       </div>
+      {view.canSetTotals && (
+        <section className={styles.targetCard}>
+          <div className={styles.label}>Melanjutkan game sebelumnya? Isi poin terakhir tiap pemain.</div>
+          <button
+            type="button"
+            className={styles.stock}
+            onClick={() => {
+              setTotalsInput(view.totals.map(String));
+              setPanel("continue");
+            }}
+          >
+            Lanjutkan game
+          </button>
+        </section>
+      )}
       {view.status === "paused" && <p className={styles.notice}>Permainan dijeda, menunggu pemain kembali.</p>}
       {view.status === "cancelled" && <p className={styles.notice}>Sesi dibatalkan karena pemain tidak kembali.</p>}
       {view.status === "finished" && (
@@ -810,6 +827,37 @@ export function Table({ view, error, onIntent }: TableProps) {
               </>
             )}
           </section>
+        </Modal>
+      )}
+      {panel === "continue" && view.canSetTotals && (
+        <Modal title="Lanjutkan game" onClose={() => setPanel(null)}>
+          <form
+            className={styles.targetCard}
+            onSubmit={(event) => {
+              event.preventDefault();
+              onIntent({ type: "set_totals", totals: totalsInput.map(Number) });
+              setPanel(null);
+            }}
+          >
+            <div className={styles.label}>Poin terakhir tiap pemain. Poin tertinggi main duluan.</div>
+            {view.seats.map((_, seat) => (
+              <label key={seat} className={`${styles.target} ${styles.playerRow}`}>
+                <Avatar info={view.players[seat]} />
+                <span>{nameOf(seat)}</span>
+                <input
+                  type="number"
+                  step={1}
+                  required
+                  value={totalsInput[seat] ?? ""}
+                  aria-label={`Poin ${nameOf(seat)}`}
+                  onChange={(event) => setTotalsInput(totalsInput.map((v, i) => (i === seat ? event.target.value : v)))}
+                />
+              </label>
+            ))}
+            <button type="submit" className={styles.stock}>
+              Simpan poin
+            </button>
+          </form>
         </Modal>
       )}
       {panel === "settings" && (

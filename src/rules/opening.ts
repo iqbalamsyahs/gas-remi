@@ -53,8 +53,8 @@ export function openingDiscard(state: OpeningState, player: PlayerId, card: Card
 
 // Setelah keempat pemain membuang, satu kartu diambil acak dari cangkulan sebagai penentu.
 // Kartu penentu keluar dari permainan. Buangan pembukaan yang angkanya sama dengan joker
-// membuat pembuangnya kena penalti dan kartu itu ditutup.
-export function resolveJoker(state: OpeningState, rng: () => number): OpeningState {
+// membuat pembuangnya kena penalti dan kartu itu ditutup. Buangan ke-i dibuang oleh kursi (firstPlayer + i) % 4.
+export function resolveJoker(state: OpeningState, rng: () => number, firstPlayer: PlayerId = 0): OpeningState {
   if (state.discard.cards.length !== 4) throw new Error("OPENING_INCOMPLETE");
   const stock = [...state.stock];
   const [penentu] = stock.splice(Math.floor(rng() * stock.length), 1);
@@ -64,7 +64,7 @@ export function resolveJoker(state: OpeningState, rng: () => number): OpeningSta
   let closedIndex: number | null = null;
   state.discard.cards.forEach((card, index) => {
     if (card.rank !== jokerRank) return;
-    penalties[index] -= JOKER_PENALTY_MULTIPLIER * baseValue(card.rank);
+    penalties[(firstPlayer + index) % 4] -= JOKER_PENALTY_MULTIPLIER * baseValue(card.rank);
     closedIndex = index;
   });
 

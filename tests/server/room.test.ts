@@ -470,3 +470,23 @@ test("with no human seated, a spectator may reset so the table cannot get stuck"
   expect(room.canReset(null)).toBe(true);
   expect(viewFor(room, null).canReset).toBe(true);
 });
+
+test("the room master continues a game: totals are set and the highest total plays first", () => {
+  const room = newRoom();
+  expect(() => room.handle(1, { type: "set_totals", totals: [100, 400, 200, 0] })).toThrow("TOTALS_LOCKED");
+  room.handle(0, { type: "set_totals", totals: [100, 400, 200, 0] });
+  expect(room.session.totals).toEqual([100, 400, 200, 0]);
+  expect(room.board()!.turn).toBe(1);
+});
+
+test("totals are locked once someone has drawn in the opening", () => {
+  const room = newRoom();
+  room.handle(0, { type: "opening_draw" });
+  expect(() => room.handle(0, { type: "set_totals", totals: [100, 0, 0, 0] })).toThrow("TOTALS_LOCKED");
+});
+
+test("totals must be four whole numbers", () => {
+  const room = newRoom();
+  expect(() => room.handle(0, { type: "set_totals", totals: [1.5, 0, 0, 0] })).toThrow("INVALID_TOTALS");
+  expect(() => room.handle(0, { type: "set_totals", totals: [0, 0, 0] })).toThrow("INVALID_TOTALS");
+});
