@@ -153,7 +153,7 @@ function schedule(ctx: AudioContext, tones: Tone[], at: number, destination: Aud
 }
 
 // Rekaman suara giliran, diputar setelah alarm. Dimuat sekali lalu disimpan.
-const TURN_VOICE_URL = "/main-woy.wav";
+const TURN_VOICE_URL = "/main-woy.ogg";
 let turnVoice: Promise<AudioBuffer | null> | null = null;
 
 function loadTurnVoice(ctx: AudioContext): Promise<AudioBuffer | null> {
