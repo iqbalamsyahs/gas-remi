@@ -252,7 +252,7 @@
 }
 
 .pickable .card {
-  box-shadow: 0 0 0 3px #4ade80;
+  box-shadow: 0 0 0 1px rgb(255 193 7 / 0.7);
 }
 
 .pickable .card:disabled {

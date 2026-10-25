@@ -118,7 +118,7 @@ Ronde berakhir dengan salah satu dari dua cara: ada pemain yang closed, atau can
 
 - Pemain boleh menyebut cekih kapan saja di ronde, saat tangannya tinggal satu kartu lagi untuk menutup (termasuk syarat punya seri murni). Cekih bisa dibatalkan kapan saja sampai ronde selesai.
 - Cekih hanya bisa ke pemain sebelumnya dan pemain sebelumnya lagi.
-- Cekih hanya memberi bonus dan hukuman jika penutupan adalah tutup biasa (pernah mengambil dari buangan) dan kartu yang diambil pada giliran penutupan termasuk kartu yang dibuang pemain tercekih.
+- Cekih hanya memberi bonus dan hukuman jika penutupan adalah tutup biasa (pernah mengambil dari buangan) dan kartu buangan yang dipakai membentuk kombinasi pada giliran penutupan (kartu yang dituju, atau kartu di atasnya yang ikut kombinasi) adalah kartu yang dibuang pemain tercekih. Kartu di atasnya yang hanya masuk tangan tidak dihitung.
 - Pemain penutup mendapat +10× nilai kartu penutup. Pemain tercekih mendapat −10× nilai kartu penutup.
 - Hanya cekih milik pemain penutup yang dihitung.
 
