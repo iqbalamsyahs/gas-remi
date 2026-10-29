@@ -47,7 +47,8 @@ export type Intent =
   // Ditangani di worker (membuat ruang baru), bukan di Room.handle.
   | { type: "reset" }
   // Ditangani di worker: penonton ikut main, atau pemain keluar dan kursinya diambil alih bot.
-  | { type: "sit" }
+  // seat opsional: kursi tertentu yang ingin diambil (kursi bot, atau kursi kosong saat menunggu).
+  | { type: "sit"; seat?: number }
   | { type: "leave" }
   // Hanya saat fase penyusunan (status "scoring"): susunan kombinasi tangan lalu konfirmasi.
   | { type: "confirm"; melds: string[][] }
@@ -569,8 +570,8 @@ export class Room {
   }
 
   // Penonton ikut main: kursi kosong saat menunggu didahulukan, lalu kursi bot (meneruskan tangan dan poinnya).
-  sit(userId: string): PlayerId {
-    const seat = this.openSeat();
+  sit(userId: string, wanted?: number): PlayerId {
+    const seat = wanted === undefined ? this.openSeat() : this.isOpen(wanted) ? (wanted as PlayerId) : null;
     if (seat === null) throw new Error("NO_SEAT");
     this.seats[seat] = userId;
     this.handoverUntil[seat] = null;
@@ -622,6 +623,14 @@ export class Room {
     const empty = this.status === "waiting" ? this.seats.indexOf("") : -1;
     const seat = empty !== -1 ? empty : this.seats.findIndex((id) => id.startsWith(BOT_PREFIX));
     return seat === -1 ? null : (seat as PlayerId);
+  }
+
+  // Kursi ini bisa diambil penonton: kursi bot, atau kursi kosong saat menunggu.
+  private isOpen(seat: number): boolean {
+    if (this.status === "finished" || this.status === "cancelled") return false;
+    const id = this.seats[seat];
+    if (id === undefined) return false;
+    return id.startsWith(BOT_PREFIX) || (id === "" && this.status === "waiting");
   }
 
   private toBot(seat: PlayerId): void {

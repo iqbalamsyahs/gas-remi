@@ -151,6 +151,15 @@ test("sitting in a bot seat whose move is already scheduled stops that move", ()
   expect(room.board()!.turn).toBe(1);
 });
 
+test("a spectator can pick which bot seat to take", () => {
+  const room = botRoom();
+  expect(room.sit("u9", 2)).toBe(2);
+  expect(room.seats[2]).toBe("u9");
+  expect(() => room.sit("u8", 0)).toThrow("NO_SEAT");
+  expect(() => room.sit("u8", 2)).toThrow("NO_SEAT");
+  expect(() => room.sit("u8", 9)).toThrow("NO_SEAT");
+});
+
 test("a table with no human seats does not run bots", () => {
   const room = mixedRoom();
   room.leave(0);

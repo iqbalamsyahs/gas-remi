@@ -164,7 +164,7 @@ export class Table extends DurableObject<Env> {
     try {
       if (intent.type === "sit") {
         if (seat !== null) throw new Error("ALREADY_SEATED");
-        room.setProfile(room.sit(userId), profile!);
+        room.setProfile(room.sit(userId, typeof intent.seat === "number" ? intent.seat : undefined), profile!);
       } else if (intent.type === "leave") {
         room.leave(seat as PlayerId);
       } else {

@@ -475,6 +475,11 @@ export function Table({ view, error, onIntent }: TableProps) {
                 <strong>{nameOf(seat)}</strong>
               </div>
               <span className={styles.opponentCount}>{view.seats[seat] === "" ? "kosong" : `${count} kartu`}</span>
+              {spectator && view.canSit && (view.players[seat].kind === "bot" || (view.status === "waiting" && view.seats[seat] === "")) && (
+                <button type="button" className={styles.stock} onClick={() => onIntent({ type: "sit", seat })}>
+                  Duduk di sini
+                </button>
+              )}
               {board && board.table[seat].length > 0 && <Melds melds={board.table[seat]} jokerRank={board.jokerRank} />}
             </div>
           ),
