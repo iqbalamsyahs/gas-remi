@@ -85,7 +85,7 @@ test("seatScore with the automatic arrangement matches scoreRound", () => {
     hands: [[c("2H"), c("3H"), c("4H"), c("9S")], [], [], []],
     table: [[[c("7C"), c("7D"), c("7S")]], [], [], []],
   });
-  const auto = handArrangement(s.hands[0], s.jokerRank, canUseMelds(s.hands[0], s.laidPureSeri[0], s.jokerRank));
+  const auto = handArrangement(s.hands[0], s.jokerRank, s.laidPureSeri[0]);
   expect(seatScore(s, 0, auto)).toBe(scoreRound(s)[0]);
 });
 
@@ -157,4 +157,13 @@ test("tie in score: the arrangement prefers the pure seri 2C 3C 4C 5C over a jok
   const hand = ["3S", "3H", "3C", "2C", "4C", "5C", "KD"].map(c);
   const arr = handArrangement(hand, "K", true);
   expect(arr.melds.some((meld) => meld.map((card) => card.id).sort().join(",") === "2C,3C,4C,5C")).toBe(true);
+});
+
+test("joker meld counts minus when the only pure seri borrows a card from another meld", () => {
+  // Joker = A. 3H 4H 5H murni hanya kalau 3H tidak dipakai di tris 3S 3H AD. Susunan terbaik 3S 3H AD + 4H 5H AC 7H
+  // tidak punya seri murni. Susunan dengan seri murni: 3H 4H 5H + 7H AC AD, 3S jadi sampah.
+  const hand = ["3S", "AD", "3H", "7H", "4H", "AC", "5H"].map(c);
+  const arr = handArrangement(hand, "A", false);
+  expect(arr.melds.map((meld) => meld.map((card) => card.id).sort().join(","))).toEqual(["3H,4H,5H", "7H,AC,AD"]);
+  expect(canUseMelds([["3S", "3H", "AD"].map(c), ["4H", "5H", "AC", "7H"].map(c)], false, "A")).toBe(false);
 });

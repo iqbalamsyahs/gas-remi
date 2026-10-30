@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card, Rank } from "../../src/rules/cards";
-import { discardCard, pickFromDiscard, type RoundState } from "../../src/rules/turn";
+import { checkClosed, discardCard, pickFromDiscard, type RoundState } from "../../src/rules/turn";
 
 function c(id: string): Card {
   return { id, rank: id.slice(0, -1) as Rank, suit: id.slice(-1) as Card["suit"] };
@@ -109,4 +109,15 @@ test("a cekih target's card that only goes into the hand does not trigger cekih"
   const closed = discardCard(picked, 0, c("KD"));
   expect(closed.result?.cekihTarget).toBeNull();
   expect(closed.result?.bonus).toBe(100);
+});
+
+// Bug: 3H ikut dihitung di seri murni 3H-4H-5H padahal sudah dipakai di tris 3S-3H-AD. Partisinya tidak punya seri murni.
+test("tutup tangan ditolak kalau seri murni hanya ada dengan meminjam kartu kombinasi lain", () => {
+  const state = round({
+    hands: [["3S", "AD", "3H", "7H", "4H", "AC", "5H", "KS"].map(c), [], [], []],
+    jokerRank: "A",
+    phase: "discard",
+    turn: 0,
+  });
+  expect(checkClosed(state, 0, c("KS"))).toBeNull();
 });

@@ -1,7 +1,6 @@
 import { makeDeck, type Card, type Rank } from "./cards";
 import { classify } from "./combos";
-import { canPartition } from "./partition";
-import { hasPureSeri } from "./scoring";
+import { canClose } from "./partition";
 import { subsets } from "./subsets";
 import type { PlayerId } from "./opening";
 import type { RoundState } from "./turn";
@@ -13,8 +12,7 @@ import type { RoundState } from "./turn";
 // Hanya X yang membentuk kombinasi sah dengan dua atau tiga kartu tangan yang perlu dicek (X tidak bisa dipakai lain).
 // Seperti syarat tutup, tangan yang jadi harus punya seri murni (atau seri murni sudah diturunkan).
 export function canCallCekih(hand: Card[], jokerRank: Rank | null, laidPureSeri = false): boolean {
-  const closes = (cards: Card[]) =>
-    canPartition(cards, jokerRank) && (laidPureSeri || hasPureSeri(cards, jokerRank));
+  const closes = (cards: Card[]) => canClose(cards, jokerRank, laidPureSeri);
   if (closes(hand)) return true;
   const held = new Set(hand.map((card) => card.id));
   const useful = makeDeck().filter((extra) => !held.has(extra.id) && formsMeldWithHand(extra, hand, jokerRank));

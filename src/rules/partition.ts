@@ -13,6 +13,15 @@ export function canPartition(cards: Card[], jokerRank: Rank | null): boolean {
   return false;
 }
 
+// Bisa ditutup: habis dipartisi, dan (kalau belum menurunkan seri murni) salah satu kombinasinya seri murni.
+// Seri murni harus jadi bagian partisi itu sendiri, bukan sekadar ada di tangan sambil memakai kartu kombinasi lain.
+export function canClose(cards: Card[], jokerRank: Rank | null, laidPureSeri: boolean): boolean {
+  if (laidPureSeri) return canPartition(cards, jokerRank);
+  return subsets(cards, 3, 4).some(
+    (group) => classify(group, jokerRank).pure && canPartition(removeCards(cards, group), jokerRank),
+  );
+}
+
 export function removeCards(hand: Card[], cards: Card[]): Card[] {
   const out = [...hand];
   for (const card of cards) {

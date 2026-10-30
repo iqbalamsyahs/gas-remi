@@ -19,11 +19,21 @@ interface Best extends Arrangement {
 }
 
 // Susunan tangan dengan nilai terbaik. Dipakai sebagai usulan awal dan untuk bot.
-// allowMelds: kombinasi di tangan hanya boleh plus kalau pemain punya seri murni. Kalau tidak, semua kartu jadi sampah.
-export function handArrangement(hand: Card[], jokerRank: Rank | null, allowMelds: boolean): Arrangement {
-  if (!allowMelds) return { melds: [], leftover: hand };
-  const best = bestFrom(hand, jokerRank);
-  return { melds: best.melds, leftover: best.leftover };
+// Kombinasi di tangan hanya boleh plus kalau pemain sudah menurunkan seri murni, atau salah satu kombinasinya
+// sendiri seri murni (kartunya tidak dipinjam kombinasi lain). Kalau tidak bisa, semua kartu jadi sampah.
+export function handArrangement(hand: Card[], jokerRank: Rank | null, laidPureSeri: boolean): Arrangement {
+  if (laidPureSeri) {
+    const best = bestFrom(hand, jokerRank);
+    return { melds: best.melds, leftover: best.leftover };
+  }
+  let best: Best | null = null;
+  for (const pure of subsets(hand, 3, 4)) {
+    if (!classify(pure, jokerRank).pure) continue;
+    const inner = bestFrom(hand.filter((card) => !pure.includes(card)), jokerRank);
+    const candidate: Best = { ...inner, score: meldValue(pure, jokerRank) + inner.score, melds: [pure, ...inner.melds], pure: inner.pure + 1 };
+    if (best === null || isBetter(candidate, best)) best = candidate;
+  }
+  return best ? { melds: best.melds, leftover: best.leftover } : { melds: [], leftover: hand };
 }
 
 // Susunan yang dikirim pemain. Null jika ada kombinasi tidak sah, kartu tidak ada di tangan, atau kartu dipakai dua kali.
@@ -55,7 +65,7 @@ export function cekihPenaltyOf(state: RoundState, seat: number): number {
 
 export function scoreRound(state: RoundState): number[] {
   const arrangements = state.hands.map((hand, seat) =>
-    handArrangement(hand, state.jokerRank, canUseMelds(hand, state.laidPureSeri[seat], state.jokerRank)),
+    handArrangement(hand, state.jokerRank, state.laidPureSeri[seat]),
   );
   return finalScores(state, arrangements);
 }
@@ -118,16 +128,8 @@ function isBetter(a: Best, b: Best): boolean {
   return a.jokers < b.jokers;
 }
 
-// Kombinasi di tangan (seri, tris, atau dengan joker) dihitung plus kalau pemain sudah menurunkan seri murni,
-// atau punya seri murni di tangan.
-export function canUseMelds(hand: Card[], laidPureSeri: boolean, jokerRank: Rank | null): boolean {
-  return laidPureSeri || hasPureSeri(hand, jokerRank);
-}
-
-// Seri murni (tanpa joker, termasuk tris As) di antara kartu tangan.
-export function hasPureSeri(hand: Card[], jokerRank: Rank | null): boolean {
-  return subsets(hand, 3, 4).some((group) => {
-    const check = classify(group, jokerRank);
-    return check.kind !== "invalid" && check.pure;
-  });
+// Susunan kombinasi dari pemain sah dihitung plus kalau pemain sudah menurunkan seri murni,
+// atau salah satu kombinasi yang disusun adalah seri murni (tanpa joker, termasuk tris As).
+export function canUseMelds(melds: Card[][], laidPureSeri: boolean, jokerRank: Rank | null): boolean {
+  return laidPureSeri || melds.some((meld) => classify(meld, jokerRank).pure);
 }

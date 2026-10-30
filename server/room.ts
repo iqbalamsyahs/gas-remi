@@ -452,7 +452,7 @@ export class Room {
     const round = this.round!;
     this.status = "scoring";
     this.scoringArrangement = round.hands.map((hand, seat) =>
-      handArrangement(hand, round.jokerRank, canUseMelds(hand, round.laidPureSeri[seat], round.jokerRank)),
+      handArrangement(hand, round.jokerRank, round.laidPureSeri[seat]),
     );
     this.scoringConfirmed = [false, false, false, false];
     this.seats.forEach((seatId, seat) => {
@@ -492,7 +492,7 @@ export class Room {
     if (this.scoringConfirmed[seat]) throw new Error("ALREADY_CONFIRMED");
     const hand = this.round!.hands[seat];
     const melds = intent.melds.map((ids) => ids.map((id) => findCard(hand, id)));
-    if (melds.length > 0 && !canUseMelds(hand, this.round!.laidPureSeri[seat], this.round!.jokerRank)) {
+    if (melds.length > 0 && !canUseMelds(melds, this.round!.laidPureSeri[seat], this.round!.jokerRank)) {
       throw new Error("MELD_NEEDS_PURE_SERI");
     }
     const arrangement = validateArrangement(hand, melds, this.round!.jokerRank);
