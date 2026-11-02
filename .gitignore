@@ -47,3 +47,6 @@ next-env.d.ts
 .dev.vars
 
 .vercel
+
+# IDE per-user state
+.openidea/
