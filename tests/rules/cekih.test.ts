@@ -41,7 +41,8 @@ test("hand far from closing cannot call cekih", () => {
   expect(canCallCekih(hand, null)).toBe(false);
 });
 
-test("caller who is one card short can call cekih to another player", () => {
+test("caller who is one card short can call cekih to the player before the previous one", () => {
+  // READY butuh satu 8: dibuang pemain sebelum sebelumnya, pemain sebelumnya membuang sampah sebagai penutup.
   const out = callCekih(round({ hands: [READY, [], [], []] }), 0, 2);
   expect(out.cekih).toEqual([{ caller: 0, target: 2 }]);
 });
@@ -52,7 +53,7 @@ test("calling cekih to yourself is refused", () => {
 
 test("calling cekih when the hand is far from closing is refused", () => {
   const far = ["2H", "7C", "KD", "AS", "5D", "9S", "3C", "QH"].map(c);
-  expect(() => callCekih(round({ hands: [far, [], [], []] }), 0, 2)).toThrow("CEKIH_NOT_ALLOWED");
+  expect(() => callCekih(round({ hands: [far, [], [], []] }), 0, 3)).toThrow("CEKIH_NOT_ALLOWED");
 });
 
 test("cancelling removes the cekih so it can be called again", () => {
@@ -72,12 +73,26 @@ test("hand with a joker one 9 short can call cekih by discarding its own leftove
   expect(canCallCekih(hand, "8")).toBe(true);
 });
 
-test("cekih only targets the previous two players", () => {
-  // A (0): pemain sebelumnya D (3) dan sebelumnya lagi C (2). B (1) ada sesudah A, jadi tidak boleh.
-  const start = round({ hands: [READY, [], [], []] });
+test("cekih goes to the previous player when the needed card is discarded directly", () => {
+  // KD KS 4S (laid seri): satu K lagi dibuang pemain sebelumnya, 4S dibuang sebagai penutup. Hanya pemain sebelumnya D (3).
+  const start = round({ hands: [[c("KD"), c("KS"), c("4S")], [], [], []], laidPureSeri: [true, false, false, false] });
   expect(callCekih(start, 0, 3).cekih).toEqual([{ caller: 0, target: 3 }]);
+  expect(() => callCekih(start, 0, 2)).toThrow("CEKIH_TARGET_NOT_ALLOWED");
+});
+
+test("cekih goes to the player before the previous one when the needed card is under the previous discard", () => {
+  // KD KS (laid seri): satu K lagi dari pemain sebelum sebelumnya, pemain sebelumnya membuang sampah di atasnya.
+  const start = round({ hands: [[c("KD"), c("KS")], [], [], []], laidPureSeri: [true, false, false, false] });
   expect(callCekih(start, 0, 2).cekih).toEqual([{ caller: 0, target: 2 }]);
-  expect(() => callCekih(start, 0, 1)).toThrow("CEKIH_TARGET_NOT_ALLOWED");
+  expect(() => callCekih(start, 0, 3)).toThrow("CEKIH_TARGET_NOT_ALLOWED");
+});
+
+test("five cards 5-5-5 and K-K can cekih to the player before the previous one", () => {
+  // 5S 5D 5H jadi tris di tangan, KD KS butuh satu K: K dari pemain sebelum sebelumnya, sampah dari pemain sebelumnya jadi penutup.
+  const hand = [c("5S"), c("5D"), c("5H"), c("KD"), c("KS")];
+  const start = round({ hands: [hand, [], [], []], laidPureSeri: [true, false, false, false] });
+  expect(callCekih(start, 0, 2).cekih).toEqual([{ caller: 0, target: 2 }]);
+  expect(() => callCekih(start, 0, 3)).toThrow("CEKIH_TARGET_NOT_ALLOWED");
 });
 
 test("hand one card short but without any pure seri cannot call cekih", () => {

@@ -239,7 +239,8 @@ export function Table({ view, error, onIntent }: TableProps) {
     view.you !== null &&
     view.status === "playing" &&
     canCallCekih(view.hand, board.jokerRank, board.laidPureSeri[view.you]);
-  const allowedTargets = view.you === null ? [] : cekihTargets(view.you);
+  const allowedTargets =
+    view.you === null ? [] : cekihTargets(view.you, view.hand, board?.jokerRank ?? null, board?.laidPureSeri[view.you] ?? false);
   const myConfirmed = scoringPhase && view.you !== null && view.scoring!.confirmed[view.you];
   const jokerRank = board?.jokerRank ?? null;
 

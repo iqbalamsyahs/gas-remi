@@ -80,6 +80,7 @@ Setiap giliran terdiri dari satu pengambilan lalu tepat satu pembuangan.
 - Kartu yang dituju maksimal kartu ke-7 dihitung dari kartu yang paling baru dibuang.
 - Kartu yang dituju beserta semua kartu yang lebih baru darinya ikut terambil semua.
 - Kartu yang dituju harus langsung membentuk kombinasi dengan minimal 2 kartu dari tangan.
+- Pengambilan tidak boleh mengosongkan tangan. Pemain harus punya minimal satu kartu untuk dibuang.
 - Tidak bisa mengambil melewati kartu yang ditutup (joker yang dibuang).
 
 Contoh: pemain memegang 3♥ dan 5♥, dan 4♥ ada di posisi ke-3 dari ujung buangan. Pemain mengambil 4♥ beserta 2 kartu di atasnya, menurunkan 3♥ 4♥ 5♥, lalu tetap membuang 1 kartu.
@@ -88,6 +89,7 @@ Contoh: pemain memegang 3♥ dan 5♥, dan 4♥ ada di posisi ke-3 dari ujung bu
 
 - Kombinasi pada umumnya disimpan di tangan sampai ronde selesai.
 - Yang diturunkan ke meja hanya: seri murni sebagai syarat ambil buangan, dan kombinasi yang dibentuk dari kartu buangan.
+- Seri murni diturunkan sekali per ronde. Setelah itu tombolnya tidak muncul lagi. Penurunan tidak boleh mengosongkan tangan, karena pemain harus membuang satu kartu.
 
 ## Membuang joker
 
@@ -117,7 +119,9 @@ Ronde berakhir dengan salah satu dari dua cara: ada pemain yang closed, atau can
 **Cekih**
 
 - Pemain boleh menyebut cekih kapan saja di ronde, saat tangannya tinggal satu kartu lagi untuk menutup (termasuk syarat punya seri murni). Cekih bisa dibatalkan kapan saja sampai ronde selesai.
-- Cekih hanya bisa ke pemain sebelumnya dan pemain sebelumnya lagi.
+- Cekih hanya ke satu pemain, tergantung dari mana kartu yang kurang datang:
+  - Kalau kartu yang kurang dibuang pemain sebelum sebelumnya, dan pemain sebelumnya membuang kartu sampah di atasnya (sebagai penutup), cekih ke pemain sebelum sebelumnya.
+  - Kalau kartu yang kurang dibuang pemain sebelumnya langsung, cekih ke pemain sebelumnya.
 - Cekih hanya memberi bonus dan hukuman jika penutupan adalah tutup biasa (pernah mengambil dari buangan) dan kartu buangan yang dipakai membentuk kombinasi pada giliran penutupan (kartu yang dituju, atau kartu di atasnya yang ikut kombinasi) adalah kartu yang dibuang pemain tercekih. Kartu di atasnya yang hanya masuk tangan tidak dihitung.
 - Pemain penutup mendapat +10× nilai kartu penutup. Pemain tercekih mendapat −10× nilai kartu penutup.
 - Hanya cekih milik pemain penutup yang dihitung.

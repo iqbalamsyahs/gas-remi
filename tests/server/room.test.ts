@@ -376,7 +376,7 @@ test("view labels empty seats, bots, and humans without a profile", () => {
 test("cekih intent is refused when hand is not one card short", () => {
   const room = newRoom();
   playOpening(room);
-  expect(() => room.handle(0, { type: "cekih", target: 2 })).toThrow("CEKIH_NOT_ALLOWED");
+  expect(() => room.handle(0, { type: "cekih", target: 3 })).toThrow("CEKIH_NOT_ALLOWED");
 });
 
 test("cekih_batal intent is refused when no cekih exists", () => {
