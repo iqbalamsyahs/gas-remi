@@ -700,6 +700,33 @@
   box-shadow: none;
 }
 
+/* Kartu penutup di buangan: dibuat pudar dan diberi label, supaya beda dengan buangan biasa. */
+.closing {
+  position: relative;
+  opacity: 0.55;
+}
+
+.closingTag {
+  position: absolute;
+  left: 50%;
+  top: -18px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fde68a;
+  background: rgb(0 0 0 / 0.55);
+  padding: 1px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.discardLine {
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .actions button.danger {
   background: transparent;
   color: #ffb3b3;

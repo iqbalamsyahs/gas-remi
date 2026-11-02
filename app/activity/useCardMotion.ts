@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type RefObject } from "react";
+import type { PlayerView } from "../../server/view";
 
 // Zona tempat kartu bisa berpindah. Kartu yang pindah antar zona ini dianimasikan.
 const ZONES = new Set(["hand", "discard", "meld", "stock"]);
@@ -7,28 +8,48 @@ const FLY_MS = 250;
 const FLIP_MS = 400;
 const STAGGER_MS = 60;
 const GLOW_MS = 600;
+const GHOST_MS = 400;
 
 type Snapshot = {
   cards: Map<string, { rect: DOMRect; zone: string }>;
   stock: DOMRect | null;
+  rounds: number;
+  stockCount: number;
+  handCounts: number[];
 };
 
 // Animasi gerak kartu saat diambil, dibuang, dan diturunkan jadi meld. Posisi tiap kartu dicatat di setiap
 // perubahan tampilan, lalu kartu yang pindah zona terbang dari posisi lama ke posisi baru (FLIP).
-// Kartu dari cangkulan atau buangan dibalik. Meld baru diberi kilau. Tidak mengubah state.
-export function useCardMotion(rootRef: RefObject<HTMLElement | null>, view: unknown): void {
+// Kartu dari cangkulan atau buangan dibalik. Meld baru diberi kilau. Aksi lawan (kartu tidak terlihat)
+// dianimasikan dari kursinya: buangan terbang dari kursi ke buangan, ambil dari cangkulan memunculkan kartu belakang.
+// Tidak mengubah state.
+export function useCardMotion(rootRef: RefObject<HTMLElement | null>, view: PlayerView): void {
   const prev = useRef<Snapshot | null>(null);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
     const old = prev.current;
-    const next: Snapshot = { cards: new Map(), stock: null };
-    next.stock = root.querySelector<HTMLElement>('[data-zone="stock"]')?.getBoundingClientRect() ?? null;
+    const next: Snapshot = {
+      cards: new Map(),
+      stock: root.querySelector<HTMLElement>('[data-zone="stock"]')?.getBoundingClientRect() ?? null,
+      rounds: view.rounds,
+      stockCount: view.board?.stockCount ?? 0,
+      handCounts: [...view.handCounts],
+    };
     prev.current = next;
-    // Render pertama belum punya posisi lama, jadi tidak ada yang dianimasikan.
-    if (!old) return;
+    // Render pertama belum punya posisi lama. Ronde baru (kartu dibagikan ulang) tidak dianimasikan.
+    if (!old || old.rounds !== view.rounds) {
+      root.querySelectorAll<HTMLElement>("[data-card-id]").forEach((el) => {
+        next.cards.set(el.dataset.cardId!, { rect: el.getBoundingClientRect(), zone: el.closest<HTMLElement>("[data-zone]")?.dataset.zone ?? "" });
+      });
+      return;
+    }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Lawan yang jumlah kartunya berkurang membuang kartu, dan yang bertambah mengambil dari cangkulan.
+    const discarder = view.handCounts.findIndex((count, seat) => seat !== view.you && count < old.handCounts[seat]);
+    const drawer = view.handCounts.findIndex((count, seat) => seat !== view.you && count > old.handCounts[seat]);
 
     let stagger = 0;
     const glowed = new Set<Element>();
@@ -57,16 +78,37 @@ export function useCardMotion(rootRef: RefObject<HTMLElement | null>, view: unkn
         );
       }
 
+      // Buangan lawan baru: terbang dari kursi lawan yang jumlah kartunya berkurang.
+      if (before === undefined && zone === "discard" && discarder !== -1) {
+        const seat = root.querySelector<HTMLElement>(`[data-seat="${discarder}"]`);
+        if (seat) fly(el, seat.getBoundingClientRect(), rect, false, stagger++ * STAGGER_MS);
+        return;
+      }
+
       if (!moved && !drawn) return;
       const from = moved ? before!.rect : old.stock!;
       const fromDeckOrPile = moved ? before!.zone === "discard" || before!.zone === "stock" : true;
       fly(el, from, rect, fromDeckOrPile, stagger++ * STAGGER_MS);
     });
+
+    // Lawan mengambil dari cangkulan: kartu belakang terbang dari cangkulan ke kursinya.
+    const deck = old.stock;
+    const seat = drawer !== -1 ? root.querySelector<HTMLElement>(`[data-seat="${drawer}"]`) : null;
+    if (!reduced && seat && deck && next.stockCount < old.stockCount) {
+      ghostCard(deck, seat.getBoundingClientRect());
+    }
   }, [rootRef, view]);
 }
 
+// Titik tengah elemen, dipakai supaya kartu dari kursi yang ukurannya berbeda tetap pas.
+function center(rect: DOMRect): { x: number; y: number } {
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
 function fly(el: HTMLElement, from: DOMRect, to: DOMRect, flip: boolean, delay: number): void {
-  const offset = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
+  const a = center(from);
+  const b = center(to);
+  const offset = `translate(${a.x - b.x}px, ${a.y - b.y}px)`;
   const rest = "translate(0px, 0px)";
   if (flip) {
     el.animate(
@@ -84,4 +126,33 @@ function fly(el: HTMLElement, from: DOMRect, to: DOMRect, flip: boolean, delay: 
       fill: "backwards",
     });
   }
+}
+
+// Kartu belakang sementara dari cangkulan ke kursi lawan. Dihapus setelah animasi selesai.
+function ghostCard(from: DOMRect, to: DOMRect): void {
+  const ghost = document.createElement("div");
+  Object.assign(ghost.style, {
+    position: "fixed",
+    left: `${from.left}px`,
+    top: `${from.top}px`,
+    width: `${from.width}px`,
+    height: `${from.height}px`,
+    borderRadius: "6px",
+    background: "linear-gradient(135deg, #1e3a8a, #3b5bdb)",
+    border: "2px solid #fff",
+    boxSizing: "border-box",
+    pointerEvents: "none",
+    zIndex: "1000",
+  });
+  document.body.appendChild(ghost);
+  const a = center(from);
+  const b = center(to);
+  const anim = ghost.animate(
+    [
+      { transform: "translate(0px, 0px)", opacity: 1 },
+      { transform: `translate(${b.x - a.x}px, ${b.y - a.y}px)`, opacity: 0 },
+    ],
+    { duration: GHOST_MS, easing: "ease-in-out" },
+  );
+  anim.onfinish = () => ghost.remove();
 }

@@ -479,7 +479,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       <section className={styles.opponents}>
         {view.handCounts.map((count, seat) =>
           seat === view.you ? null : (
-            <div key={seat} className={`${styles.opponent} ${seat === activeSeat ? styles.active : ""}`}>
+            <div key={seat} data-seat={seat} className={`${styles.opponent} ${seat === activeSeat ? styles.active : ""}`}>
               <div className={styles.playerRow}>
                 <Avatar info={view.players[seat]} />
                 <strong>{nameOf(seat)}</strong>
@@ -533,13 +533,19 @@ export function Table({ view, error, onIntent }: TableProps) {
                 </button>
               ) : (
                 // Tanda baru muncul setelah joker ditentukan (putaran pertama selesai).
-                <span key={card.id} className={!inOpening && pickable ? styles.pickable : undefined}>
+                <span
+                  key={card.id}
+                  className={`${!inOpening && pickable ? styles.pickable : ""} ${board.result?.closingCard?.id === card.id ? styles.closing : ""}`}
+                >
                   <CardFace
                     card={card}
                     selected={pickupTarget === card.id || pickupExtra.includes(card.id)}
                     disabled={!playable || !drawPhase || !pickable}
                     onClick={() => discardClick(card.id, index)}
                   />
+                  {board.result?.closingCard?.id === card.id && (
+                    <span className={styles.closingTag}>{board.result.fromHand ? "Tutup tangan" : "Tutup"}</span>
+                  )}
                 </span>
               );
             })}
@@ -782,6 +788,17 @@ export function Table({ view, error, onIntent }: TableProps) {
               ))}
             </tbody>
           </table>
+        </section>
+        <section className={styles.detail}>
+          <div className={styles.label}>Buangan tiap ronde, berurutan</div>
+          {view.history.map((entry) => (
+            <p key={entry.round} className={styles.discardLine}>
+              <strong>Ronde {entry.round}:</strong>{" "}
+              {entry.discards.length === 0
+                ? "tidak ada data"
+                : entry.discards.map((d) => `${nameOf(d.seat)} ${d.card.rank}${SUIT_SYMBOL[d.card.suit]}`).join(", ")}
+            </p>
+          ))}
         </section>
         </Modal>
       )}

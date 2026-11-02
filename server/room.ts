@@ -68,6 +68,14 @@ export interface HistoryEntry {
   round: number;
   scores: number[];
   totals: number[];
+  // Buangan ronde ini, berurutan dari yang pertama.
+  discards: DiscardLogEntry[];
+}
+
+// Satu kartu yang dibuang pemain. Dicatat per ronde untuk riwayat.
+export interface DiscardLogEntry {
+  seat: PlayerId;
+  card: Card;
 }
 
 // Profil pemain manusia per kursi. Bot tidak punya profil (ditampilkan dengan avatar bot).
@@ -122,6 +130,7 @@ export interface RoomSnapshot {
   scoringArrangement: Arrangement[] | null;
   scoringConfirmed: boolean[];
   history: HistoryEntry[];
+  discardLog?: DiscardLogEntry[];
   profiles: (PlayerProfile | null)[];
   pausedSeat: PlayerId | null;
   // Snapshot lama: waktu jeda. Diganti offlineSince.
@@ -163,6 +172,8 @@ export class Room {
   scoringArrangement: Arrangement[] | null = null;
   scoringConfirmed: boolean[] = [false, false, false, false];
   history: HistoryEntry[] = [];
+  // Buangan ronde yang sedang berjalan. Dipindah ke riwayat saat ronde selesai.
+  discardLog: DiscardLogEntry[] = [];
   profiles: (PlayerProfile | null)[] = [null, null, null, null];
   session: SessionState;
   lastRoundScores: number[] | null = null;
@@ -208,7 +219,9 @@ export class Room {
     room.roundDetail = snapshot.roundDetail;
     room.scoringArrangement = snapshot.scoringArrangement;
     room.scoringConfirmed = snapshot.scoringConfirmed;
-    room.history = snapshot.history;
+    // Riwayat dari snapshot lama belum punya buangan, jadi diisi kosong.
+    room.history = snapshot.history.map((entry) => ({ ...entry, discards: entry.discards ?? [] }));
+    room.discardLog = snapshot.discardLog ?? [];
     room.profiles = snapshot.profiles ?? [null, null, null, null];
     room.handoverUntil = snapshot.handoverUntil ?? [null, null, null, null];
     room.offlineSince = snapshot.offlineSince ?? [null, null, null, null];
@@ -235,6 +248,7 @@ export class Room {
       scoringArrangement: this.scoringArrangement,
       scoringConfirmed: [...this.scoringConfirmed],
       history: this.history,
+      discardLog: [...this.discardLog],
       profiles: [...this.profiles],
       handoverUntil: [...this.handoverUntil],
       offlineSince: [...this.offlineSince],
@@ -370,6 +384,7 @@ export class Room {
       this.expectOpeningSeat(seat);
       const card = findCard(opening.hands[seat], intent.cardId);
       this.opening = openingDiscard(opening, seat, card);
+      this.discardLog = [...this.discardLog, { seat, card }];
       if (this.opening.discard.cards.length === 4) this.startPlaying();
     } else {
       throw new Error("WRONG_PHASE");
@@ -402,9 +417,12 @@ export class Room {
       case "cekih_batal":
         this.round = cancelCekih(round, seat, intent.target as PlayerId);
         break;
-      case "discard":
-        this.round = discardCard(round, seat, findCard(round.hands[seat], intent.cardId));
+      case "discard": {
+        const card = findCard(round.hands[seat], intent.cardId);
+        this.round = discardCard(round, seat, card);
+        this.discardLog = [...this.discardLog, { seat, card }];
         break;
+      }
       default:
         throw new Error("WRONG_PHASE");
     }
@@ -536,7 +554,11 @@ export class Room {
     });
     this.lastRoundScores = scores;
     this.session = applyRound(this.session, scores);
-    this.history = [...this.history, { round: this.session.rounds, scores, totals: this.session.totals }];
+    this.history = [
+      ...this.history,
+      { round: this.session.rounds, scores, totals: this.session.totals, discards: this.discardLog },
+    ];
+    this.discardLog = [];
     this.round = null;
     this.scoringArrangement = null;
     this.scoringConfirmed = [false, false, false, false];

@@ -499,3 +499,11 @@ test("totals must be four whole numbers", () => {
   expect(() => room.handle(0, { type: "set_totals", totals: [1.5, 0, 0, 0] })).toThrow("INVALID_TOTALS");
   expect(() => room.handle(0, { type: "set_totals", totals: [0, 0, 0] })).toThrow("INVALID_TOTALS");
 });
+
+test("opening discards are logged per seat in order and survive a snapshot", () => {
+  const room = newRoom();
+  playOpening(room);
+  expect(room.discardLog.map((entry) => entry.seat)).toEqual([0, 1, 2, 3]);
+  const restored = Room.restore(room.snapshot(), { target: 1000, disconnectTimeoutMs: TIMEOUT_MS, rng: () => 0 });
+  expect(restored.discardLog).toEqual(room.discardLog);
+});
