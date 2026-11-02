@@ -21,7 +21,7 @@ type ClientMessage =
   | { type: "intent"; intent: Intent };
 
 const ID_RE = /^[\w.:-]{1,200}$/;
-const ROOM_OPTIONS: RoomOptions = { target: 1000, disconnectTimeoutMs: 60_000 };
+const ROOM_OPTIONS: RoomOptions = { target: 1000, disconnectTimeoutMs: 60_000, botDelayMs: 1500 };
 
 function errorOf(err: unknown): string {
   return err instanceof Error ? err.message : "UNKNOWN";
