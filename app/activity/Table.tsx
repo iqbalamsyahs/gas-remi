@@ -9,6 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { useCardMotion } from "./useCardMotion";
 import type { Card, Rank } from "../../src/rules/cards";
 import { canCallCekih, cekihTargets } from "../../src/rules/cekih";
 import { classify, orderMeld } from "../../src/rules/combos";
@@ -121,7 +122,7 @@ function FitRow({ count, children, hand = false }: { count: number; children: Re
     return () => observer.disconnect();
   }, [count]);
   return (
-    <div ref={ref} className={styles.fitRow} data-hand={hand ? "" : undefined}>
+    <div ref={ref} className={styles.fitRow} data-hand={hand ? "" : undefined} data-zone={hand ? "hand" : undefined}>
       {Children.map(children, (child, i) => (
         <div className={styles.slot} style={{ marginLeft: i === 0 ? 0 : spacing }}>
           {child}
@@ -151,7 +152,7 @@ function Melds({ melds, jokerRank }: { melds: Card[][]; jokerRank: Rank | null }
   return (
     <div className={styles.row}>
       {melds.map((meld, i) => (
-        <div key={i} className={styles.meld}>
+        <div key={i} className={styles.meld} data-zone="meld">
           {orderMeld(meld, jokerRank).map((card) => (
             <CardFace key={card.id} card={card} disabled />
           ))}
@@ -176,6 +177,7 @@ export function Table({ view, error, onIntent }: TableProps) {
   const [edit, setEdit] = useState<{ round: number; groups: string[][] } | null>(null);
   const [targetInput, setTargetInput] = useState("");
   const [panel, setPanel] = useState<"result" | "history" | "target" | "settings" | "continue" | null>(null);
+  const rootRef = useRef<HTMLElement>(null);
   // Isian poin terakhir per kursi untuk "Lanjutkan game".
   const [totalsInput, setTotalsInput] = useState<string[]>([]);
   // Modal hasil ronde terbuka otomatis saat ronde baru selesai (jumlah ronde bertambah).
@@ -211,6 +213,8 @@ export function Table({ view, error, onIntent }: TableProps) {
 
   // Suara dibunyikan dari perubahan tampilan: giliran, cekih, joker, ronde selesai, dan gerakan kartu.
   const [muted, setMutedState] = useState(isMuted);
+  // Gerak kartu antar zona (ambil, buang, turunkan meld) dianimasikan dari perubahan tampilan.
+  useCardMotion(rootRef, view);
   const prevView = useRef<PlayerView | null>(null);
   useEffect(() => {
     soundsFor(prevView.current, view).forEach(playSound);
@@ -361,7 +365,7 @@ export function Table({ view, error, onIntent }: TableProps) {
     : "";
 
   return (
-    <main className={styles.page}>
+    <main ref={rootRef} className={styles.page}>
       {jokerLeft > 0 && jokerRank !== null && (
         <div className={styles.modalBackdrop}>
           <div className={styles.jokerPopup} role="dialog" aria-label="Joker ditentukan">
@@ -493,6 +497,7 @@ export function Table({ view, error, onIntent }: TableProps) {
             <button
               type="button"
               className={`${styles.deck} ${canDraw ? styles.deckReady : ""}`}
+              data-zone="stock"
               disabled={!canDraw}
               aria-label="Ambil kartu dari cangkulan"
               onClick={() => send(inOpening ? { type: "opening_draw" } : { type: "draw_stock" })}
@@ -510,7 +515,7 @@ export function Table({ view, error, onIntent }: TableProps) {
           {pickupTarget !== null && (
             <div className={styles.label}>Kartu di atas target boleh ikut dibentuk jadi kombinasi. Klik untuk memilih.</div>
           )}
-          <div className={styles.row}>
+          <div className={styles.row} data-zone="discard">
             {board?.discard.cards.map((card, index) => {
               // Bisa diambil: maksimal 7 dari atas dan tidak di/bawah joker tertutup. Ditandai untuk semua pemain.
               const pickable =
