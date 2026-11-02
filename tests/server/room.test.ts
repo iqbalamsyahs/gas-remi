@@ -507,3 +507,9 @@ test("opening discards are logged per seat in order and survive a snapshot", () 
   const restored = Room.restore(room.snapshot(), { target: 1000, disconnectTimeoutMs: TIMEOUT_MS, rng: () => 0 });
   expect(restored.discardLog).toEqual(room.discardLog);
 });
+
+test("score preview is only available in the scoring phase", () => {
+  const room = newRoom();
+  expect(room.scorePreview()).toBeNull();
+  expect(() => room.handle(0, { type: "scoring_preview", melds: [] })).toThrow("WRONG_PHASE");
+});

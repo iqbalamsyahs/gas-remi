@@ -83,6 +83,8 @@ export interface PlayerView {
   revealed: RevealedHand | null;
   // Fase penyusunan: siapa yang sudah konfirmasi, dan susunan tangan kita sendiri.
   scoring: { confirmed: boolean[]; mine: Arrangement | null } | null;
+  // Fase penyusunan: perkiraan skor tiap pemain dari susunan yang sekarang (sudah termasuk susunan sementara).
+  scorePreview: number[] | null;
   pausedSeat: PlayerId | null;
   board: PublicBoard | null;
   hand: Card[];
@@ -116,6 +118,7 @@ export function viewFor(room: Room, seat: PlayerId | null): PlayerView {
       room.status === "scoring"
         ? { confirmed: [...room.scoringConfirmed], mine: seat === null ? null : room.scoringArrangement?.[seat] ?? null }
         : null,
+    scorePreview: room.scorePreview(),
     pausedSeat: room.pausedSeat,
     board: board && {
       jokerRank: board.jokerRank,

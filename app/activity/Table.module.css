@@ -727,6 +727,17 @@
   line-height: 1.5;
 }
 
+.howto {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.howto li + li {
+  margin-top: 6px;
+}
+
 /* Label penutup muncul dengan pop kecil, dan pemberitahuan cekih berkedip tiga kali. */
 @keyframes tagPop {
   from {

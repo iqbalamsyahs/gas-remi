@@ -52,8 +52,10 @@ test("penentu is removed and the other three of its rank become jokers", () => {
   s = resolveJoker(s, () => 0);
   expect(s.jokerRank).not.toBeNull();
   expect(s.stock.length).toBe(before - 1);
+  // Penentu tertutup di paling bawah buangan, jadi ada di buangan dan dihitung sebagai satu joker yang sudah keluar.
+  expect(s.discard.cards[0]).toEqual(s.jokerCard);
   const everywhere = [...s.hands.flat(), ...s.stock, ...s.discard.cards];
-  expect(everywhere.filter((card) => card.rank === s.jokerRank).length).toBe(3);
+  expect(everywhere.filter((card) => card.rank === s.jokerRank).length).toBe(4);
 });
 
 test("stock has 19 cards after opening", () => {
@@ -81,7 +83,8 @@ test("joker discarded in opening penalizes discarder", () => {
   const out = resolveJoker(s, () => 0);
   expect(out.jokerRank).toBe("10");
   expect(out.penalties[1]).toBe(-50);
-  expect(out.discard.closedIndex).toBe(1);
+  // Penentu ada di indeks 0, jadi 10H (indeks 1 di buangan pembukaan) sekarang ada di indeks 2.
+  expect(out.discard.closedIndex).toBe(2);
 });
 
 test("opening joker penalty goes to the seat that discarded it, not the discard position", () => {

@@ -176,7 +176,7 @@ export function Table({ view, error, onIntent }: TableProps) {
   // Susunan kombinasi saat fase penyusunan. Null berarti belum diubah, jadi pakai usulan server.
   const [edit, setEdit] = useState<{ round: number; groups: string[][] } | null>(null);
   const [targetInput, setTargetInput] = useState("");
-  const [panel, setPanel] = useState<"result" | "history" | "target" | "settings" | "continue" | null>(null);
+  const [panel, setPanel] = useState<"result" | "history" | "target" | "settings" | "continue" | "howto" | null>(null);
   const rootRef = useRef<HTMLElement>(null);
   // Isian poin terakhir per kursi untuk "Lanjutkan game".
   const [totalsInput, setTotalsInput] = useState<string[]>([]);
@@ -276,6 +276,24 @@ export function Table({ view, error, onIntent }: TableProps) {
   const groups = edit !== null && edit.round === view.rounds ? edit.groups : serverGroups;
   const groupedIds = groups.flat();
   const leftoverCards = view.hand.filter((card) => !groupedIds.includes(card.id));
+
+  // Susunan sementara dikirim ke server untuk perkiraan skor. Dikirim setelah pemain berhenti mengubah sebentar.
+  // Hanya setelah pemain mengubah susunan sendiri (edit !== null), supaya usulan server tidak memicu kirim ulang.
+  const groupsKey = JSON.stringify(groups);
+  const scoringOpen =
+    view.status === "scoring" && view.scoring !== null && !spectator && !view.scoring.confirmed[view.you!] && edit !== null;
+  const sendPreview = useRef(onIntent);
+  useEffect(() => {
+    sendPreview.current = onIntent;
+  });
+  useEffect(() => {
+    if (!scoringOpen) return;
+    const timer = setTimeout(
+      () => sendPreview.current({ type: "scoring_preview", melds: JSON.parse(groupsKey) as string[][] }),
+      300,
+    );
+    return () => clearTimeout(timer);
+  }, [groupsKey, scoringOpen]);
 
   function setGroups(next: string[][]) {
     setEdit({ round: view.rounds, groups: next });
@@ -392,7 +410,7 @@ export function Table({ view, error, onIntent }: TableProps) {
             {board?.jokerCard && (
               <div className={styles.jokerCard}>
                 <CardFace card={board.jokerCard} disabled />
-                <span>Kartu penentu (keluar dari permainan). Tiga kartu {jokerRank} lainnya jadi joker.</span>
+                <span>Kartu penentu ditaruh tertutup di paling bawah buangan. Satu joker sudah keluar, tinggal tiga kartu {jokerRank} lagi.</span>
               </div>
             )}
             <div className={styles.label}>Ingat baik-baik, joker tidak ditampilkan lagi.</div>
@@ -418,6 +436,9 @@ export function Table({ view, error, onIntent }: TableProps) {
       </header>
 
       <div className={styles.toolbar}>
+        <button type="button" className={styles.tool} aria-label="Cara main" title="Cara main" onClick={() => setPanel("howto")}>
+          ❓
+        </button>
         <button type="button" className={styles.tool} aria-label="Target poin" title="Target poin" onClick={() => setPanel("target")}>
           🎯
         </button>
@@ -621,6 +642,11 @@ export function Table({ view, error, onIntent }: TableProps) {
       {spectator ? null : scoringPhase && !myConfirmed ? (
         <section className={styles.hand}>
           <div className={styles.label}>Kombinasimu (kartu yang tidak masuk kombinasi dihitung minus)</div>
+          {view.scorePreview && (
+            <p className={styles.notice}>
+              Perkiraan skor: {view.seats.map((_, seat) => `${nameOf(seat)} ${signed(view.scorePreview![seat])}`).join(" · ")}
+            </p>
+          )}
           {groups.map((group, index) => (
             <div key={index} className={styles.row}>
               {group.map((id) => {
@@ -780,6 +806,23 @@ export function Table({ view, error, onIntent }: TableProps) {
             ))}
           </div>
         </section>
+        </Modal>
+      )}
+      {panel === "howto" && (
+        <Modal title="Cara main" onClose={() => setPanel(null)}>
+          <section className={styles.detail}>
+            <ol className={styles.howto}>
+              <li>Setiap giliran: ambil satu kartu (dari cangkulan atau buangan), lalu buang satu kartu.</li>
+              <li>Kombinasi: seri (3 kartu atau lebih berurutan, sewarna) atau tris (3–4 kartu dengan nilai sama, beda warna).</li>
+              <li>Seri murni: seri tanpa joker. Diturunkan sekali per ronde sebelum boleh mengambil dari buangan.</li>
+              <li>Ambil dari buangan: kartu yang dituju dan kartu di atasnya ikut terambil. Kartu yang dituju harus membentuk kombinasi dengan minimal 2 kartu dari tanganmu. Tangan tidak boleh kosong setelah mengambil.</li>
+              <li>Tutup: kalau sisa kartumu bisa dibentuk semua jadi kombinasi, kamu menutup ronde setelah membuang satu kartu.</li>
+              <li>Tutup tangan: menutup tanpa pernah mengambil dari buangan. Bonusnya lebih besar.</li>
+              <li>Cekih: saat tanganmu tinggal satu kartu lagi untuk tutup, kamu bisa menyebut cekih ke satu pemain. Kalau kartu penutupmu diambil dari buangan pemain itu, kamu dapat bonus dan dia kena hukuman.</li>
+              <li>Joker: kartu sesuai joker ronde ini bisa menggantikan kartu apa pun, kecuali di seri murni. Membuang joker kena penalti.</li>
+              <li>Skor: kombinasi dihitung plus, kartu sampah dihitung minus. Perkiraan skor tampil di layar penyusunan sebelum kamu konfirmasi.</li>
+            </ol>
+          </section>
         </Modal>
       )}
       {panel === "history" && view.history.length > 0 && (

@@ -52,6 +52,8 @@ export type Intent =
   | { type: "leave" }
   // Hanya saat fase penyusunan (status "scoring"): susunan kombinasi tangan lalu konfirmasi.
   | { type: "confirm"; melds: string[][] }
+  // Hanya saat penyusunan: susunan sementara untuk perkiraan skor. Tidak mengunci apa-apa, susunan tidak sah diabaikan.
+  | { type: "scoring_preview"; melds: string[][] }
   // Hanya sebelum ronde pertama selesai. Target 100 sampai 5000.
   | { type: "set_target"; target: number }
   // Lanjutkan game: room master mengisi poin terakhir tiap kursi, hanya sebelum ada yang mengambil kartu.
@@ -506,6 +508,20 @@ export class Room {
   }
 
   private handleScoring(seat: PlayerId, intent: Intent): void {
+    if (intent.type === "scoring_preview") {
+      // Susunan sementara: hanya dipakai untuk perkiraan skor. Kalau tidak sah, usulan sebelumnya dibiarkan.
+      if (this.scoringConfirmed[seat]) return;
+      const hand = this.round!.hands[seat];
+      try {
+        const melds = intent.melds.map((ids) => ids.map((id) => findCard(hand, id)));
+        if (melds.length > 0 && !canUseMelds(melds, this.round!.laidPureSeri[seat], this.round!.jokerRank)) return;
+        const arrangement = validateArrangement(hand, melds, this.round!.jokerRank);
+        if (arrangement !== null) this.scoringArrangement![seat] = arrangement;
+      } catch {
+        // Kartu tidak ditemukan di tangan: abaikan.
+      }
+      return;
+    }
     if (intent.type !== "confirm") throw new Error("WRONG_PHASE");
     if (this.scoringConfirmed[seat]) throw new Error("ALREADY_CONFIRMED");
     const hand = this.round!.hands[seat];
@@ -516,6 +532,12 @@ export class Room {
     const arrangement = validateArrangement(hand, melds, this.round!.jokerRank);
     if (arrangement === null) throw new Error("INVALID_ARRANGEMENT");
     this.confirmScoring(seat, arrangement);
+  }
+
+  // Perkiraan skor semua pemain dari susunan yang sekarang (usulan atau susunan sementara). Null di luar penyusunan.
+  scorePreview(): number[] | null {
+    if (this.status !== "scoring" || this.round === null || this.scoringArrangement === null) return null;
+    return finalScores(this.round, this.scoringArrangement);
   }
 
   // arrangement null = pakai usulan otomatis yang sudah ada.

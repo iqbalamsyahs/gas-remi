@@ -55,7 +55,7 @@ Joker baru ditentukan setelah keempat pemain menyelesaikan satu giliran, sehingg
 
 1. Pemain 1 sampai 4 masing-masing mengambil 1 kartu dari cangkulan, lalu membuang 1 kartu. Pada putaran ini tidak boleh mengambil dari buangan.
 2. Dalam putaran pertama, tidak boleh ada dua pemain yang membuang kartu dengan angka sama. Contoh: pemain 1 membuang J, maka pemain 2–4 tidak boleh membuang J.
-3. Setelah putaran selesai, 1 kartu diambil acak dari cangkulan dan dibuka sebagai **kartu penentu joker**. Ketiga kartu lain dengan angka yang sama menjadi joker. Kartu penentu keluar dari permainan.
+3. Setelah putaran selesai, 1 kartu diambil acak dari cangkulan sebagai **kartu penentu joker**. Ketiga kartu lain dengan angka yang sama menjadi joker. Kartu penentu ditaruh **tertutup di paling bawah buangan**, sebagai tanda bahwa satu joker sudah keluar (tinggal tiga). Kartu ini tidak bisa diambil.
 4. Jika salah satu kartu buangan putaran pertama ternyata angka joker:
    - Pemain yang membuangnya dikurangi 10× nilai kartu itu.
    - Kartu itu ditutup di buangan. Semua kartu buangan sebelumnya ikut terblokir dan tidak bisa diambil lagi.
