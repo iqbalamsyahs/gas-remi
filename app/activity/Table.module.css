@@ -727,6 +727,44 @@
   line-height: 1.5;
 }
 
+/* Label penutup muncul dengan pop kecil, dan pemberitahuan cekih berkedip tiga kali. */
+@keyframes tagPop {
+  from {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes alertPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(253 230 138 / 0);
+  }
+  50% {
+    box-shadow: 0 0 12px 3px rgb(253 230 138 / 0.8);
+  }
+}
+
+.closingTag {
+  animation: tagPop 0.35s ease-out;
+}
+
+.cekihAlert {
+  border-radius: 6px;
+  animation: alertPulse 1.2s ease-in-out 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closingTag,
+  .cekihAlert {
+    animation: none;
+  }
+}
+
 .actions button.danger {
   background: transparent;
   color: #ffb3b3;

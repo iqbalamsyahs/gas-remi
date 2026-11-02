@@ -699,7 +699,7 @@ export function Table({ view, error, onIntent }: TableProps) {
       {board?.cekih
         .filter((c) => c.target === view.you)
         .map((c) => (
-          <p key={`${c.caller}-${c.target}`} className={styles.notice}>
+          <p key={`${c.caller}-${c.target}`} className={`${styles.notice} ${styles.cekihAlert}`}>
             {nameOf(c.caller)} menyebut cekih ke kamu.
           </p>
         ))}
