@@ -731,6 +731,9 @@ export function Table({ view, error, onIntent }: TableProps) {
           {!cekihReady && allowedTargets.length > 0 && (
             <span className={styles.label}>Cekih belum bisa: tanganmu belum tinggal satu kartu lagi untuk tutup.</span>
           )}
+          {cekihReady && allowedTargets.length > 0 && (
+            <span className={styles.label}>Kamu tinggal butuh satu kartu lagi. Kartu itu diharapkan dari {nameOf(allowedTargets[0])}.</span>
+          )}
         </section>
       )}
       {panel === "result" && view.roundDetail !== null && (
