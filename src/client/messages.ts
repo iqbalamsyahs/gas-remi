@@ -32,6 +32,8 @@ const MESSAGES: Record<string, string> = {
   NEED_PURE_SERI: "Pengambilan pertama harus membentuk seri murni (bunga sama, tanpa joker).",
   INVALID_MELD: "Kartu yang dipilih tidak membentuk kombinasi yang sah.",
   NOT_PURE_SERI: "Yang bisa diturunkan ke meja hanya seri murni.",
+  HAND_EMPTY_AFTER_PICKUP: "Tangan akan kosong setelah mengambil. Sisakan satu kartu untuk dibuang.",
+  HAND_EMPTY_AFTER_LAY_DOWN: "Tangan akan kosong setelah menurunkan. Sisakan satu kartu untuk dibuang.",
 
   // Penyusunan dan skor
   INVALID_ARRANGEMENT: "Susunan kombinasi tidak sah. Periksa lagi kombinasinya.",
@@ -43,7 +45,7 @@ const MESSAGES: Record<string, string> = {
   CEKIH_NOT_ALLOWED: "Belum bisa menyebut cekih. Tanganmu belum tinggal satu kartu lagi untuk tutup.",
   CEKIH_NOT_FOUND: "Tidak ada cekih ke pemain itu yang bisa dibatalkan.",
   CEKIH_ALREADY_ACTIVE: "Cekih ke pemain itu sudah aktif.",
-  CEKIH_TARGET_NOT_ALLOWED: "Cekih hanya bisa ke pemain sebelummu dan sebelumnya lagi.",
+  CEKIH_TARGET_NOT_ALLOWED: "Cekih itu tidak bisa ke pemain itu. Lihat tombol cekih yang aktif.",
 
   // Reset
   TOTALS_LOCKED: "Poin hanya bisa diisi room master sebelum ada yang mengambil kartu.",

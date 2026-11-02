@@ -361,6 +361,19 @@ export function Table({ view, error, onIntent }: TableProps) {
   const aboveTarget = targetPos === -1 ? 0 : (board?.discard.cards.length ?? 0) - targetPos - 1;
   const handLeftAfterPickup = view.hand.length - selected.length + (aboveTarget - pickupExtra.length);
   const canPickup = drawPhase && playable && pickupTarget !== null && selected.length >= 2 && handLeftAfterPickup >= 1;
+  // Alasan tombol aksi yang sedang tidak bisa dipakai, supaya pemain tahu apa yang kurang.
+  const laidThisRound = board !== null && view.you !== null && board.laidPureSeri[view.you];
+  const actionHint = !playable
+    ? null
+    : drawPhase && pickupTarget !== null && !canPickup
+      ? selected.length < 2
+        ? "Pilih minimal 2 kartu dari tanganmu untuk dikombinasikan dengan kartu buangan."
+        : "Tangan akan kosong setelah mengambil. Sisakan satu kartu untuk dibuang."
+      : (drawPhase || discardPhase) && !inOpening && !laidThisRound && selected.length > 0 && !canLayDown
+        ? selected.length < 3
+          ? "Seri murni minimal 3 kartu."
+          : "Tangan akan kosong setelah menurunkan. Sisakan satu kartu untuk dibuang."
+        : null;
 
   // Kartu terpilih dari sampah bisa dijadikan kombinasi baru kalau sah.
   const selectedLeftover = leftoverCards.filter((card) => selected.includes(card.id));
@@ -595,6 +608,7 @@ export function Table({ view, error, onIntent }: TableProps) {
             Giliran {nameOf(board?.turn ?? 0)}
           </span>
         )}
+        {actionHint && <span className={styles.label}>{actionHint}</span>}
       </section>
 
       {board && view.you !== null && board.table[view.you].length > 0 && !scoringPhase && (
@@ -714,6 +728,9 @@ export function Table({ view, error, onIntent }: TableProps) {
               Batalkan cekih ke {nameOf(c.target)}
             </button>
           ))}
+          {!cekihReady && allowedTargets.length > 0 && (
+            <span className={styles.label}>Cekih belum bisa: tanganmu belum tinggal satu kartu lagi untuk tutup.</span>
+          )}
         </section>
       )}
       {panel === "result" && view.roundDetail !== null && (
