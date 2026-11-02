@@ -89,6 +89,8 @@ export function pickFromDiscard(
     ...removeCards(state.hands[player], handCards),
     ...above.filter((card) => !fromDiscard.some((f) => f.id === card.id)),
   ];
+  // Pemain harus punya minimal satu kartu untuk dibuang setelah mengambil. Kalau tidak, giliran macet.
+  if (remaining.length === 0) throw new Error("HAND_EMPTY_AFTER_PICKUP");
   const table = state.table.map((melds, seat) => (seat === player ? [...melds, meld] : melds));
   const laidPureSeri = state.laidPureSeri.map((flag, seat) => (seat === player ? true : flag));
   const targetIndex = state.discard.cards.findIndex((card) => card.id === target.id);

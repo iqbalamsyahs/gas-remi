@@ -218,6 +218,24 @@ test("pickup from deeper than seven cards is refused as too deep, not as blocked
   expect(() => pickFromDiscard(s, 0, c("2S"), [c("QH"), c("QD")])).toThrow("PICKUP_TOO_DEEP");
 });
 
+test("pickup that would leave the hand empty is refused", () => {
+  // Tangan 2 kartu, keduanya dipakai di kombinasi, dan tidak ada kartu di atas 4H. Tidak ada kartu untuk dibuang.
+  const s = round({
+    hands: [[c("2H"), c("3H")], [], [], []],
+    discard: { cards: [c("AD"), c("4H")], closedIndex: null },
+  });
+  expect(() => pickFromDiscard(s, 0, c("4H"), [c("2H"), c("3H")])).toThrow("HAND_EMPTY_AFTER_PICKUP");
+});
+
+test("pickup with two cards is allowed when a card above the target stays in hand", () => {
+  const s = round({
+    hands: [[c("2H"), c("3H")], [], [], []],
+    discard: { cards: [c("AD"), c("4H"), c("5H")], closedIndex: null },
+  });
+  const out = pickFromDiscard(s, 0, c("4H"), [c("2H"), c("3H")]);
+  expect(ids(out.hands[0])).toEqual(["5H"]);
+});
+
 test("closing without any pure seri is refused", () => {
   // Joker = 9. 8H 8S 9D(joker) + KD: tris dengan joker, tanpa seri murni. Tidak boleh menutup.
   const s = round({

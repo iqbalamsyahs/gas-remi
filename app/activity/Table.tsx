@@ -354,7 +354,11 @@ export function Table({ view, error, onIntent }: TableProps) {
   const canDraw =
     playable && (board?.stockCount ?? 0) > 0 && (drawPhase || (inOpening && view.hand.length === 7));
   const canLayDown = (drawPhase || discardPhase) && playable && selected.length >= 3;
-  const canPickup = drawPhase && playable && pickupTarget !== null && selected.length >= 2;
+  // Kartu di atas target ikut masuk tangan kalau tidak dipilih untuk kombinasi. Tangan tidak boleh kosong setelah mengambil.
+  const targetPos = board?.discard.cards.findIndex((card) => card.id === pickupTarget) ?? -1;
+  const aboveTarget = targetPos === -1 ? 0 : (board?.discard.cards.length ?? 0) - targetPos - 1;
+  const handLeftAfterPickup = view.hand.length - selected.length + (aboveTarget - pickupExtra.length);
+  const canPickup = drawPhase && playable && pickupTarget !== null && selected.length >= 2 && handLeftAfterPickup >= 1;
 
   // Kartu terpilih dari sampah bisa dijadikan kombinasi baru kalau sah.
   const selectedLeftover = leftoverCards.filter((card) => selected.includes(card.id));
