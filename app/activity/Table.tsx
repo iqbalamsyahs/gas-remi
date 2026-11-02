@@ -353,7 +353,8 @@ export function Table({ view, error, onIntent }: TableProps) {
   // Mengambil dari cangkulan: di pembukaan saat tangan masih 7 kartu, atau di awal giliran main.
   const canDraw =
     playable && (board?.stockCount ?? 0) > 0 && (drawPhase || (inOpening && view.hand.length === 7));
-  const canLayDown = (drawPhase || discardPhase) && playable && selected.length >= 3;
+  // Seri murni cukup sekali per ronde. Tangan tidak boleh kosong setelah menurunkan.
+  const canLayDown = (drawPhase || discardPhase) && playable && selected.length >= 3 && selected.length < view.hand.length;
   // Kartu di atas target ikut masuk tangan kalau tidak dipilih untuk kombinasi. Tangan tidak boleh kosong setelah mengambil.
   const targetPos = board?.discard.cards.findIndex((card) => card.id === pickupTarget) ?? -1;
   const aboveTarget = targetPos === -1 ? 0 : (board?.discard.cards.length ?? 0) - targetPos - 1;
@@ -564,7 +565,7 @@ export function Table({ view, error, onIntent }: TableProps) {
             Ambil dari buangan
           </button>
         )}
-        {(drawPhase || discardPhase) && playable && !inOpening && (
+        {(drawPhase || discardPhase) && playable && !inOpening && board && !board.laidPureSeri[view.you!] && (
           <button
             type="button"
             disabled={!canLayDown}

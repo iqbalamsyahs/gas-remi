@@ -236,6 +236,17 @@ test("pickup with two cards is allowed when a card above the target stays in han
   expect(ids(out.hands[0])).toEqual(["5H"]);
 });
 
+test("lay down that would leave the hand empty is refused", () => {
+  const s = round({ hands: [[c("2L"), c("3L"), c("4L")], [], [], []], phase: "discard", drewFrom: "stock" });
+  expect(() => layDownPureSeri(s, 0, [c("2L"), c("3L"), c("4L")])).toThrow("HAND_EMPTY_AFTER_LAY_DOWN");
+});
+
+test("lay down pure seri leaves the other cards in hand", () => {
+  const s = round({ hands: [[c("2L"), c("3L"), c("4L"), c("KD")], [], [], []], phase: "discard", drewFrom: "stock" });
+  const out = layDownPureSeri(s, 0, [c("2L"), c("3L"), c("4L")]);
+  expect(ids(out.hands[0])).toEqual(["KD"]);
+});
+
 test("closing without any pure seri is refused", () => {
   // Joker = 9. 8H 8S 9D(joker) + KD: tris dengan joker, tanpa seri murni. Tidak boleh menutup.
   const s = round({

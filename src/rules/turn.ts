@@ -113,6 +113,8 @@ export function layDownPureSeri(state: RoundState, player: PlayerId, cards: Card
   // Seri murni: seri tanpa joker, atau tris As tanpa joker.
   if (!check.pure) throw new Error("NOT_PURE_SERI");
   const hand = removeCards(state.hands[player], cards);
+  // Setelah menurunkan, pemain harus membuang satu kartu. Kalau tangan kosong, giliran macet.
+  if (hand.length === 0) throw new Error("HAND_EMPTY_AFTER_LAY_DOWN");
   const laidPureSeri = state.laidPureSeri.map((flag, seat) => (seat === player ? true : flag));
   const table = state.table.map((melds, seat) => (seat === player ? [...melds, cards] : melds));
   return { ...state, hands: withHand(state, player, hand), laidPureSeri, table };
