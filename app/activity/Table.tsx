@@ -192,6 +192,8 @@ export function Table({ view, error, onIntent }: TableProps) {
   const inOpening = board?.phase === "opening";
   const drawPhase = board?.phase === "draw";
   const discardPhase = board?.phase === "discard";
+  // Buangan ronde terakhir saja, untuk modal hasil ronde.
+  const lastDiscards = view.history.length > 0 ? view.history[view.history.length - 1].discards : [];
   // Pembukaan memakai status "opening", permainan memakai "playing". Keduanya boleh bertindak saat gilirannya.
   const playable = board !== null && (view.status === "opening" || view.status === "playing") && myTurn;
   // Kursi yang sedang giliran, untuk ditandai di layar semua pemain. Null di luar pembukaan dan permainan.
@@ -805,6 +807,19 @@ export function Table({ view, error, onIntent }: TableProps) {
               </div>
             ))}
           </div>
+          {lastDiscards.length > 0 && (
+            <>
+              <div className={styles.resultSubtitle}>Buangan ronde ini</div>
+              <div className={styles.cards}>
+                {lastDiscards.map((d, i) => (
+                  <span key={i} className={styles.discardCard}>
+                    <CardFace card={d.card} disabled />
+                    <span className={styles.discardWho}>{nameOf(d.seat)}</span>
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
         </section>
         </Modal>
       )}
@@ -851,17 +866,6 @@ export function Table({ view, error, onIntent }: TableProps) {
               ))}
             </tbody>
           </table>
-        </section>
-        <section className={styles.detail}>
-          <div className={styles.label}>Buangan tiap ronde, berurutan</div>
-          {view.history.map((entry) => (
-            <p key={entry.round} className={styles.discardLine}>
-              <strong>Ronde {entry.round}:</strong>{" "}
-              {entry.discards.length === 0
-                ? "tidak ada data"
-                : entry.discards.map((d) => `${nameOf(d.seat)} ${d.card.rank}${SUIT_SYMBOL[d.card.suit]}`).join(", ")}
-            </p>
-          ))}
         </section>
         </Modal>
       )}

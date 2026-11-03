@@ -12,6 +12,13 @@
   font-family: var(--font-geist-sans), sans-serif;
 }
 
+.loadingBanner {
+  width: min(560px, 100%);
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
 .loadingFan {
   position: relative;
   width: 140px;
@@ -721,10 +728,16 @@
   pointer-events: none;
 }
 
-.discardLine {
-  margin: 4px 0;
-  font-size: 13px;
-  line-height: 1.5;
+.discardCard {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.discardWho {
+  font-size: 11px;
+  opacity: 0.75;
 }
 
 .howto {
