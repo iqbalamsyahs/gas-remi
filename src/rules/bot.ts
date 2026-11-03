@@ -16,7 +16,7 @@ export type BotIntent =
   | { type: "cekih_batal"; target: number };
 
 // Strategi sederhana: ambil dari buangan kalau membentuk kombinasi, turunkan seri murni, cekih saat siap tutup,
-// dan buang kartu sampah bernilai tertinggi (bukan joker). Kalau bisa tutup, bot tutup.
+// dan buang kartu yang paling tidak berguna di tangan (bukan joker). Kalau bisa tutup, bot tutup.
 export function chooseBotPlay(round: RoundState, seat: PlayerId): BotIntent {
   if (round.phase === "draw") return pickupChoice(round, seat) ?? { type: "draw_stock" };
   return layChoice(round, seat) ?? cekihChoice(round, seat) ?? discardChoice(round, seat);
@@ -62,7 +62,7 @@ function cekihChoice(round: RoundState, seat: PlayerId): BotIntent | null {
   return null;
 }
 
-// Tutup kalau bisa. Kalau tidak, buang kartu bernilai tertinggi yang bukan joker, dan hindari kartu yang
+// Tutup kalau bisa. Kalau tidak, buang kartu yang paling sedikit pasangannya (bukan joker), dan hindari kartu yang
 // membuat pemain yang sudah mencekih bisa menutup.
 function discardChoice(round: RoundState, seat: PlayerId): BotIntent {
   const hand = round.hands[seat];
@@ -83,8 +83,27 @@ function discardChoice(round: RoundState, seat: PlayerId): BotIntent {
   const pool = nonJoker.length > 0 ? nonJoker : hand;
   const safe = pool.filter((card) => !threats.some((caller) => enablesClose(round.hands[caller], card, round.jokerRank)));
   const candidates = safe.length > 0 ? safe : pool;
-  const card = candidates.reduce((best, c) => (baseValue(c.rank) > baseValue(best.rank) ? c : best));
+  // Kartu yang paling sedikit pasangannya di tangan dibuang dulu. Kartu yang punya pasangan (tris atau seri) disimpan.
+  // Kalau sama-sama tidak punya pasangan, yang bernilai tertinggi dibuang.
+  const card = candidates.reduce((best, c) => {
+    const bestLinks = connections(best, hand, round.jokerRank);
+    const links = connections(c, hand, round.jokerRank);
+    if (links !== bestLinks) return links < bestLinks ? c : best;
+    return baseValue(c.rank) > baseValue(best.rank) ? c : best;
+  });
   return { type: "discard", cardId: card.id };
+}
+
+const RANK_ORDER: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+
+// Jumlah kartu lain (bukan joker) di tangan yang bisa jadi tris (angka sama) atau seri (sewarna, selisih maksimal 2).
+function connections(card: Card, hand: Card[], jokerRank: Rank | null): number {
+  const index = RANK_ORDER.indexOf(card.rank);
+  return hand.filter((other) => {
+    if (other.id === card.id || isJoker(other, jokerRank)) return false;
+    if (other.rank === card.rank) return true;
+    return other.suit === card.suit && Math.abs(RANK_ORDER.indexOf(other.rank) - index) <= 2;
+  }).length;
 }
 
 // Apakah pemain dengan tangan ini bisa menutup setelah mengambil kartu yang dibuang.
