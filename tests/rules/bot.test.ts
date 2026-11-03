@@ -70,6 +70,17 @@ test("bot discards the highest non-joker leftover when it cannot close", () => {
   expect(chooseBotPlay(s, 0)).toEqual({ type: "discard", cardId: "AS" });
 });
 
+test("bot keeps an ace that has a pair in hand and discards the isolated king first", () => {
+  const s = round({
+    hands: [["2H", "7C", "KD", "AS", "AH", "5D", "9S", "3C"].map(c), [], [], []],
+    jokerRank: "9",
+    phase: "discard",
+    drewFrom: "stock",
+    laidPureSeri: [true, false, false, false],
+  });
+  expect(chooseBotPlay(s, 0)).toEqual({ type: "discard", cardId: "KD" });
+});
+
 test("bot discards a spare joker for free after drawing the last stock card", () => {
   const s = round({
     hands: [["2H", "7C", "KD", "AS", "5D", "9S", "3C", "QH"].map(c), [], [], []],
