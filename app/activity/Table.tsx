@@ -232,6 +232,8 @@ export function Table({ view, error, onIntent }: TableProps) {
   const tutupTangan = board?.result?.fromHand ?? false;
   const emptySeats = view.seats.filter((seat) => seat === "").length;
   const nameOf = (seat: number) => view.players[seat]?.name ?? `P${seat + 1}`;
+  // Opponents read in turn order starting after you (spectators start from seat 0).
+  const seatOrder = view.handCounts.map((_, k) => ((view.you ?? -1) + 1 + k) % view.handCounts.length);
   // Penonton tidak punya kursi: tanpa tangan dan tanpa aksi.
   const spectator = view.you === null;
   // Cekih: tombol hanya aktif kalau tangan sudah tinggal satu kartu lagi untuk tutup.
@@ -513,14 +515,14 @@ export function Table({ view, error, onIntent }: TableProps) {
       )}
 
       <section className={styles.opponents}>
-        {view.handCounts.map((count, seat) =>
+        {seatOrder.map((seat) =>
           seat === view.you ? null : (
             <div key={seat} data-seat={seat} className={`${styles.opponent} ${seat === activeSeat ? styles.active : ""}`}>
               <div className={styles.playerRow}>
                 <Avatar info={view.players[seat]} />
                 <strong>{nameOf(seat)}</strong>
               </div>
-              <span className={styles.opponentCount}>{view.seats[seat] === "" ? "kosong" : `${count} kartu`}</span>
+              <span className={styles.opponentCount}>{view.seats[seat] === "" ? "kosong" : `${view.handCounts[seat]} kartu`}</span>
               {spectator && view.canSit && (view.players[seat].kind === "bot" || (view.status === "waiting" && view.seats[seat] === "")) && (
                 <button type="button" className={styles.stock} onClick={() => onIntent({ type: "sit", seat })}>
                   Duduk di sini
