@@ -1,53 +1,77 @@
+/*
+  Meja remi di teras malam: sarung kotak-kotak ungu tua di bawah lampu.
+  Kuning lampu hanya dipakai untuk hal yang bisa kamu lakukan sekarang (giliran, ambil, pilih).
+*/
+.page,
+.loading {
+  --sarung: #2b1b3f;
+  --sarung-deep: #20142f;
+  --sarung-line: #3e2a5c;
+  --lampu: #f2b33d;
+  --lampu-soft: rgb(242 179 61 / 0.18);
+  --kertas: #fbf6ec;
+  --tinta: #1e1a24;
+  --merah: #b3261e;
+  --kawung: #1f5e5b;
+  --kawung-motif: rgb(236 222 180 / 0.55);
+  --kabut: #c9bcd9;
+  --garis: rgb(255 255 255 / 0.14);
+  --bahaya: #ef8f86;
+
+  color: #f3ecf9;
+  font-family: var(--font-display), system-ui, sans-serif;
+  /* Kotak-kotak sarung, ditambah cahaya lampu dari atas. */
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgb(242 179 61 / 0.14), transparent 60%),
+    repeating-linear-gradient(90deg, transparent 0 46px, rgb(62 42 92 / 0.55) 46px 58px),
+    repeating-linear-gradient(0deg, transparent 0 46px, rgb(62 42 92 / 0.55) 46px 58px),
+    var(--sarung);
+}
+
+/* ---------- Layar loading ---------- */
+
 .loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 18px;
   min-height: 100vh;
   padding: 16px;
   text-align: center;
-  background: #0f5132;
-  color: #f8f9fa;
-  font-family: var(--font-geist-sans), sans-serif;
-}
-
-.loadingBanner {
-  width: min(560px, 100%);
-  height: auto;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .loadingFan {
   position: relative;
-  width: 140px;
-  height: 100px;
+  width: 150px;
+  height: 104px;
   transform-origin: 50% 100%;
   animation: loadingSway 2.4s ease-in-out infinite;
 }
 
 .loadingCard {
   position: absolute;
-  left: calc(50% - 28px);
+  left: calc(50% - 30px);
   bottom: 0;
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 80px;
+  width: 60px;
+  height: 86px;
   border-radius: 8px;
-  background: #fff;
-  color: #222;
-  font-size: 28px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  background: var(--kertas);
+  color: var(--tinta);
+  font-size: 30px;
+  box-shadow: inset 0 0 0 3px var(--kertas), inset 0 0 0 4px rgb(30 26 36 / 0.15), 0 6px 14px rgb(0 0 0 / 0.4);
   transform-origin: 50% 100%;
   transform: rotate(calc((var(--i) - 1.5) * 14deg));
 }
 
 .loadingTitle {
-  margin: 0;
-  font-size: 2.2rem;
-  letter-spacing: 0.04em;
+  font-size: clamp(2.4rem, 9vw, 3.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--lampu);
 }
 
 .loadingBar {
@@ -55,12 +79,12 @@
   height: 6px;
   overflow: hidden;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--garis);
 }
 
 .loadingBar > div {
   height: 100%;
-  background: #ffc107;
+  background: var(--lampu);
   transform-origin: left;
   transition: transform 0.4s ease;
 }
@@ -83,77 +107,368 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .loadingFan {
-    animation: none;
-  }
-  .loadingBar > div {
-    transition: none;
-  }
-}
+/* ---------- Kerangka meja ---------- */
 
 .page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  width: 100%;
   min-height: 100vh;
-  padding: 32px 16px 16px;
-  background: #0f5132;
-  color: #f8f9fa;
-  font-family: var(--font-geist-sans), sans-serif;
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) 16px 0;
+}
+
+.page > :not(.modalBackdrop, .modal) {
+  width: 100%;
+  max-width: 980px;
+  margin-inline: auto;
 }
 
 .header {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.round {
+  display: flex;
+  align-items: baseline;
   gap: 8px;
 }
 
-.totals {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.round strong {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.me {
-  font-weight: 700;
-  text-decoration: underline;
+.round span {
+  color: var(--kabut);
+  font-size: 0.9rem;
+}
+
+.toolbar {
+  display: flex;
+  gap: 6px;
+}
+
+.label {
+  color: var(--kabut);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Satu tempat untuk semua pemberitahuan, supaya tidak bertebaran di layar. */
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status:empty {
+  display: none;
 }
 
 .notice,
 .error {
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  line-height: 1.4;
 }
 
 .notice {
-  background: #ffc107;
-  color: #212529;
+  border-left: 3px solid var(--kabut);
+  background: rgb(32 20 47 / 0.85);
 }
 
 .error {
-  background: #dc3545;
+  border-left: 3px solid var(--bahaya);
+  background: rgb(110 30 40 / 0.6);
 }
 
-.opponents {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  gap: 8px;
+.cekihAlert {
+  border-left-color: var(--lampu);
+  animation: alertPulse 1.2s ease-in-out 3;
+}
+
+@keyframes alertPulse {
+  50% {
+    box-shadow: 0 0 14px 2px rgb(242 179 61 / 0.6);
+  }
+}
+
+/* ---------- Meja: lawan mengelilingi ---------- */
+
+/* Grid 3x3: kursi kiri, atas, kanan (dan bawah untuk penonton) mengelilingi kain tengah. */
+.table {
+  flex: 1 0 auto;
+  align-content: center;
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) minmax(0, 1fr) minmax(120px, 200px);
+  grid-template-areas:
+    ".    top    ."
+    "left felt   right"
+    ".    bottom .";
+  align-items: center;
+  gap: 12px;
+}
+
+.left {
+  grid-area: left;
+}
+
+.top {
+  grid-area: top;
+}
+
+.right {
+  grid-area: right;
+}
+
+/* Kursi bawah hanya untuk penonton: kombinasinya di atas kursi, mengarah ke tengah. */
+.bottom {
+  grid-area: bottom;
+  flex-direction: column-reverse;
 }
 
 .opponent {
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgb(0 0 0 / 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
+
+.seatBox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 108px;
+  padding: 10px 12px 8px;
+  border: 1px solid var(--garis);
+  border-radius: 12px;
+  background: rgb(32 20 47 / 0.85);
+  text-align: center;
+}
+
+.seatMelds .row {
+  justify-content: center;
+}
+
+/* Tikar pandan di bawah lampu: alas kartu yang jelas batasnya, anyaman halus, pinggiran dijahit. */
+.felt {
+  grid-area: felt;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 240px;
+  padding: 22px 18px;
+  border: 2px dashed rgb(236 222 180 / 0.28);
+  border-radius: 28px;
+  outline: 6px solid #173f3d;
+  outline-offset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgb(242 179 61 / 0.2), transparent 65%),
+    repeating-linear-gradient(45deg, rgb(0 0 0 / 0.07) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(-45deg, rgb(255 255 255 / 0.035) 0 2px, transparent 2px 7px),
+    #1d4f4c;
+  box-shadow: 0 0 0 6px #173f3d, 0 18px 40px rgb(0 0 0 / 0.45);
+}
+
+.felt > .status,
+.felt > .targetCard,
+.felt > .detail {
+  width: min(100%, 460px);
+}
+
+.seatStats {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Kipas tiga punggung kartu kecil + jumlah. */
+.handFan {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.fanBacks {
+  position: relative;
+  width: 20px;
+  height: 16px;
+}
+
+.fanBacks::before,
+.fanBacks::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 11px;
+  height: 15px;
+  border: 1.5px solid var(--kertas);
+  border-radius: 2px;
+  background: var(--kawung);
+  transform-origin: 50% 100%;
+}
+
+.fanBacks::before {
+  left: 2px;
+  transform: rotate(-14deg);
+}
+
+.fanBacks::after {
+  left: 7px;
+  transform: rotate(10deg);
+}
+
+/* Duduk: tombol garis, kuning hanya saat disentuh/fokus, supaya tidak bersaing dengan aksi utama. */
+.sit {
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--lampu);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--lampu);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.sit:hover,
+.sit:focus-visible {
+  background: var(--lampu);
+  color: var(--tinta);
+}
+
+/* Momen tutup: kartu penutup berbalik besar di tengah, lampu menyala sebentar. */
+.closingMoment {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: radial-gradient(circle at 50% 45%, rgb(242 179 61 / 0.45), rgb(14 8 22 / 0.8) 60%);
+  animation: lampFlare 2.6s ease-out forwards;
+  cursor: pointer;
+}
+
+.closingMoment strong {
+  color: var(--lampu);
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 0.6);
+}
+
+.closingFlip {
+  perspective: 600px;
+}
+
+.closingFlip .card {
+  min-width: 120px;
+  min-height: 172px;
+  font-size: 1.8rem;
+  animation: cardFlip 0.7s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+}
+
+@keyframes cardFlip {
+  from {
+    transform: rotateY(180deg) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes lampFlare {
+  0% {
+    opacity: 0;
+  }
+  10%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.opponentCount {
+  color: var(--kabut);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pemain yang sedang giliran: disorot lampu. */
+.active {
+  border-color: var(--lampu);
+  box-shadow: 0 0 0 1px var(--lampu), 0 0 22px rgb(242 179 61 / 0.35);
+  animation: activePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes activePulse {
+  50% {
+    box-shadow: 0 0 0 1px var(--lampu), 0 0 30px 4px rgb(242 179 61 / 0.5);
+  }
+}
+
+.turnTag {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--lampu);
+  color: var(--tinta);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.playerRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sarung-line);
+  color: #fff;
+  font-size: 0.75em;
+  font-weight: 700;
+}
+
+/* ---------- Tengah meja ---------- */
 
 .middle {
   display: flex;
   justify-content: center;
-  gap: 32px;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 22px;
+  width: 100%;
 }
 
 .pile,
@@ -164,74 +479,13 @@
   gap: 8px;
 }
 
-/* Cangkulan: tumpukan kartu tertutup yang diklik untuk mengambil. */
-.deck {
-  position: relative;
-  width: 64px;
-  height: 92px;
-  border: 2px solid rgb(255 255 255 / 0.85);
-  border-radius: 6px;
-  background: repeating-linear-gradient(45deg, #1d4ed8 0 6px, #1e40af 6px 12px);
-  box-shadow: 3px 3px 0 #163a8f, 6px 6px 0 #10307a, 0 8px 16px rgb(0 0 0 / 0.35);
-  cursor: pointer;
+.pile {
+  align-items: center;
 }
 
-.deck:disabled {
-  opacity: 0.75;
-  cursor: default;
-}
-
-.deckReady {
-  outline: 3px solid #ffc107;
-  box-shadow: 3px 3px 0 #163a8f, 6px 6px 0 #10307a, 0 0 18px #ffc107;
-}
-
-.deckCount {
-  position: absolute;
-  right: 0;
-  bottom: 6px;
-  left: 0;
-  color: #fff;
-  font-weight: 700;
-  text-shadow: 0 1px 2px #000;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .deckReady {
-    animation: deckPulse 1.4s ease-in-out infinite;
-  }
-}
-
-@keyframes deckPulse {
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-/* Kartu yang baru masuk ke tangan di giliran ini. */
-.freshTag {
-  position: absolute;
-  top: -7px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0 5px;
-  border-radius: 999px;
-  background: #2563eb;
-  color: #fff;
-  font-size: 0.6rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.settings {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.label {
-  font-size: 0.875rem;
-  opacity: 0.85;
+.discard {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .row {
@@ -240,83 +494,791 @@
   gap: 6px;
 }
 
+.meld {
+  display: inline-flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px dashed var(--garis);
+  border-radius: 8px;
+}
+
+.meld .card {
+  min-width: 36px;
+  min-height: 52px;
+  font-size: 0.75rem;
+}
+
+/* Kartu kecil di kombinasi lawan dan kombinasimu: angka besar di tengah, bunga di bawahnya. */
+.seatMelds .card,
+.myMelds .card {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  min-height: 38px;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.seatMelds .corner:not(.cornerBottom),
+.myMelds .corner:not(.cornerBottom) {
+  position: static;
+  font-size: 1em;
+  line-height: 1;
+}
+
+.seatMelds .center,
+.seatMelds .cornerBottom,
+.myMelds .center,
+.myMelds .cornerBottom {
+  display: none;
+}
+
+.seatMelds .meld,
+.myMelds .meld {
+  gap: 2px;
+  padding: 3px;
+}
+
+/* Punggung kartu: motif kawung. */
+.deck,
+.card.faceDown {
+  background-color: var(--kawung);
+  background-image:
+    radial-gradient(ellipse 34% 20% at 50% 0, var(--kawung-motif) 70%, transparent 72%),
+    radial-gradient(ellipse 34% 20% at 50% 100%, var(--kawung-motif) 70%, transparent 72%),
+    radial-gradient(ellipse 20% 34% at 0 50%, var(--kawung-motif) 70%, transparent 72%),
+    radial-gradient(ellipse 20% 34% at 100% 50%, var(--kawung-motif) 70%, transparent 72%),
+    radial-gradient(circle at 50% 50%, var(--kawung-motif) 12%, transparent 14%);
+  background-size: 14px 14px;
+}
+
+.deck {
+  position: relative;
+  width: 66px;
+  height: 94px;
+  border: 3px solid var(--kertas);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #15403e, 6px 6px 0 #0f302e, 0 10px 18px rgb(0 0 0 / 0.4);
+  cursor: pointer;
+}
+
+.deck:disabled {
+  cursor: default;
+}
+
+.deckReady {
+  outline: 3px solid var(--lampu);
+  outline-offset: 3px;
+  animation: deckPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes deckPulse {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.deckCount {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  min-width: 1.6em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.75);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.card.faceDown {
+  color: rgb(255 255 255 / 0.85);
+  font-weight: 700;
+  border: 3px solid var(--kertas);
+}
+
+.hiddenMark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.75);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+/* ---------- Kartu ---------- */
+
 .card {
   position: relative;
   min-width: 60px;
   min-height: 88px;
   padding: 6px;
-  border: 2px solid transparent;
-  border-radius: 6px;
-  background: #fff;
-  color: #212529;
-  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--kertas);
+  color: var(--tinta);
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  /* Bingkai tipis di dalam kertas, lalu bayangan meja. */
+  box-shadow: inset 0 0 0 3px var(--kertas), inset 0 0 0 4px rgb(30 26 36 / 0.14), 0 3px 8px rgb(0 0 0 / 0.35);
   cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .card:disabled {
-  opacity: 0.6;
   cursor: default;
 }
 
-.pickable .card {
-  box-shadow: 0 0 0 1px rgb(255 193 7 / 0.7);
-}
-
-/* Saat disabled kartunya pudar, jadi border dipertebal supaya tetap terlihat. */
-.pickable .card:disabled {
-  box-shadow: 0 0 0 3px #ffc107;
-}
-
 .red {
-  color: #c1121f;
+  color: var(--merah);
+}
+
+.corner {
+  position: absolute;
+  top: 4px;
+  left: 5px;
+  font-size: 0.95em;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.cornerBottom {
+  top: auto;
+  left: auto;
+  bottom: 4px;
+  right: 5px;
+  transform: rotate(180deg);
+}
+
+.center {
+  font-size: 1.7em;
+  line-height: 1;
 }
 
 .selected {
-  border-color: #ffc107;
-  transform: translateY(-6px);
+  transform: translateY(-10px);
+  box-shadow: inset 0 0 0 3px var(--kertas), inset 0 0 0 4px rgb(30 26 36 / 0.14), 0 0 0 3px var(--lampu),
+    0 10px 18px rgb(0 0 0 / 0.4);
 }
 
+/* Kartu buangan yang bisa diambil: garis lampu tipis di bawahnya. */
+.pickable .card {
+  box-shadow: inset 0 0 0 3px var(--kertas), inset 0 0 0 4px rgb(30 26 36 / 0.14), 0 0 0 2px rgb(242 179 61 / 0.75);
+}
+
+.pickable .selected {
+  box-shadow: inset 0 0 0 3px var(--kertas), inset 0 0 0 4px rgb(30 26 36 / 0.14), 0 0 0 3px var(--lampu),
+    0 10px 18px rgb(0 0 0 / 0.4);
+}
+
+/* Kartu yang baru masuk ke tangan di giliran ini: titik lampu di atas. */
+.freshTag {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  overflow: hidden;
+  transform: translateX(-50%);
+  border: 2px solid var(--sarung);
+  border-radius: 50%;
+  background: var(--lampu);
+  color: transparent;
+  font-size: 0;
+}
+
+/* Kartu penutup di buangan. */
+.closing {
+  position: relative;
+  opacity: 0.6;
+}
+
+.closingTag {
+  position: absolute;
+  left: 50%;
+  top: -20px;
+  transform: translateX(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--sarung-deep);
+  color: var(--lampu);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: tagPop 0.35s ease-out;
+}
+
+@keyframes tagPop {
+  from {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0;
+  }
+}
+
+.discardCard {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.discardWho {
+  font-size: 11px;
+  color: var(--kabut);
+}
+
+/* Baris kartu tangan. Jarak dan tumpukan diatur FitRow lewat margin di setiap slot. */
+/* Cangkulan di dok hanya untuk HP. */
+.dockDeck {
+  display: none;
+}
+
+.fitRow {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  width: 100%;
+  padding-top: 12px;
+}
+
+/* Tarik kartu tangan dengan pointer tanpa men-scroll halaman. */
+.fitRow button {
+  touch-action: none;
+}
+
+.slot {
+  flex: 0 0 auto;
+}
+
+/* ---------- Dok bawah: tangan dan aksi ---------- */
+
+.dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 14px calc(env(safe-area-inset-bottom, 0px) + 14px);
+  border: 1px solid var(--garis);
+  border-bottom: none;
+  border-radius: 18px 18px 0 0;
+  background: rgb(32 20 47 / 0.94);
+  box-shadow: 0 -10px 30px rgb(0 0 0 / 0.35);
+}
+
+/* Giliranmu: tepi atas dok menyala. */
+.dockActive {
+  border-color: var(--lampu);
+  box-shadow: 0 -2px 0 var(--lampu), 0 -14px 40px rgb(242 179 61 / 0.18);
+}
+
+.dockHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.myMelds {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.myMelds .row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.hint {
+  color: var(--kabut);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Catatan di bar aksi selalu di baris sendiri, di bawah tombol. */
+.actions .hint {
+  flex-basis: 100%;
+  order: 1;
+  font-size: 0.78rem;
+}
+
+.turnLine,
+.turnLineMine {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.turnLine {
+  color: var(--kabut);
+}
+
+.turnLineMine {
+  color: var(--lampu);
+}
+
+.actions,
+.groupActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions:empty {
+  display: none;
+}
+
+/* Bar aksi di dok: paling bawah, dipisah garis tipis. */
+.dock > .actions {
+  padding-top: 10px;
+  border-top: 1px solid var(--garis);
+}
+
+.settings {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ---------- Tombol ---------- */
+
+.page button {
+  font-family: inherit;
+}
+
+.page button:focus-visible,
+.loading button:focus-visible,
+.target input:focus-visible {
+  outline: 3px solid var(--lampu);
+  outline-offset: 2px;
+}
+
+/* Tombol utama: lampu menyala hanya kalau bisa dipakai. */
+.actions button,
+.groupActions button,
 .stock,
-.actions button {
-  padding: 8px 14px;
+.target button {
+  min-height: 42px;
+  padding: 10px 18px;
   border: none;
-  border-radius: 6px;
-  background: #ffc107;
-  color: #212529;
+  border-radius: 10px;
+  background: var(--lampu);
+  color: var(--tinta);
+  font-weight: 700;
+  box-shadow: 0 2px 0 #9c6b10;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.15s;
+}
+
+.actions button:hover:not(:disabled),
+.groupActions button:hover:not(:disabled),
+.stock:hover:not(:disabled),
+.target button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.actions button:active:not(:disabled),
+.groupActions button:active:not(:disabled),
+.stock:active:not(:disabled),
+.target button:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+/* Mati: kehilangan warna lampu, jadi garis saja. */
+.actions button:disabled,
+.groupActions button:disabled,
+.stock:disabled,
+.target button:disabled {
+  background: transparent;
+  color: var(--kabut);
+  box-shadow: inset 0 0 0 1px var(--garis);
+  cursor: not-allowed;
+}
+
+.actions button.cekih {
+  background: var(--kertas);
+  color: var(--merah);
+  box-shadow: 0 2px 0 #b9ae9a;
+}
+
+.actions button.cekih:disabled {
+  background: transparent;
+  color: var(--kabut);
+  box-shadow: inset 0 0 0 1px var(--garis);
+}
+
+.actions button.danger,
+.dangerZone button.danger {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--bahaya);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--bahaya);
+  cursor: pointer;
+}
+
+.actions button.danger:hover,
+.dangerZone button.danger:hover {
+  background: rgb(239 143 134 / 0.12);
+}
+
+.actions button.reset {
+  background: transparent;
+  color: #f3ecf9;
+  box-shadow: inset 0 0 0 1px var(--garis);
+  font-weight: 600;
+}
+
+.actions button.reset:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.08);
+}
+
+/* Tombol kecil: ikon toolbar, Urutkan, Lepas, Tutup. */
+.tool {
+  min-width: 36px;
+  min-height: 36px;
+  margin-left: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--garis);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.06);
+  color: #f3ecf9;
+  font-size: 0.85em;
   font-weight: 600;
   cursor: pointer;
 }
 
-.stock:disabled,
-.actions button:disabled {
-  opacity: 0.5;
+.toolbar .tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 0;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.round {
+  white-space: nowrap;
+}
+
+.tool:hover {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.preset,
+.presetActive {
+  min-height: 38px;
+  padding: 6px 16px;
+  border: 1px solid var(--garis);
+  border-radius: 999px;
+  background: transparent;
+  color: #f3ecf9;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.preset:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.presetActive {
+  border-color: var(--lampu);
+  background: var(--lampu);
+  color: var(--tinta);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Panel dan modal ---------- */
+
+.targetCard,
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--garis);
+  border-radius: 12px;
+  background: rgb(32 20 47 / 0.85);
+}
+
+.targetCard {
+  align-items: flex-start;
+}
+
+.target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.target input {
+  width: 96px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--garis);
+  border-radius: 10px;
+  background: var(--sarung-deep);
+  color: #f3ecf9;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.target input::placeholder {
+  color: var(--kabut);
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(14 8 22 / 0.7);
+}
+
+.modal {
+  margin: auto;
+  width: min(600px, calc(100% - 32px));
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--garis);
+  border-radius: 16px;
+  background: var(--sarung);
+  color: #f3ecf9;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.5);
+}
+
+.modal::backdrop {
+  background: rgb(14 8 22 / 0.7);
+}
+
+.modal > * + * {
+  margin-top: 12px;
+}
+
+/* Pengaturan: daftar baris dipisah garis tipis, satu kotak. */
+.settingsList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--garis);
+  border-radius: 14px;
+  background: var(--sarung-deep);
+}
+
+.settingsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.settingsRow + .settingsRow {
+  border-top: 1px solid var(--garis);
+}
+
+.settingsRow.settingsHead,
+.settingsRow > .settingsHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settingsValue {
+  color: var(--lampu);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.switchRow,
+.settingsLink {
+  min-height: 52px;
+  cursor: pointer;
+}
+
+/* Chevron dari border, tidak bergantung pada font. */
+.settingsLink span {
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border-top: 2px solid var(--kabut);
+  border-right: 2px solid var(--kabut);
+  transform: rotate(45deg);
+  font-size: 0;
+}
+
+.settingsLink:hover {
+  background: rgb(255 255 255 / 0.05);
+}
+
+/* Saklar geser dari checkbox bawaan. */
+.switch {
+  appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--sarung-line);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--kertas);
+  transition: transform 0.15s;
+}
+
+.switch:checked {
+  background: var(--lampu);
+}
+
+.switch:checked::after {
+  transform: translateX(18px);
+}
+
+.switch:focus-visible {
+  outline: 3px solid var(--lampu);
+  outline-offset: 2px;
+}
+
+/* Input "Lain" sebaris dengan pilihan target, berbentuk pil yang sama. */
+.presetCustom {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.presetCustom input {
+  width: 84px;
+  appearance: textfield;
+  min-height: 38px;
+  padding: 6px 14px;
+  border: 1px dashed var(--garis);
+  border-radius: 999px;
+  background: transparent;
+  color: #f3ecf9;
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.presetCustom input::-webkit-inner-spin-button,
+.presetCustom input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.presetCustom input::placeholder {
+  color: var(--kabut);
+}
+
+.presetCustom input:focus-visible {
+  outline: 3px solid var(--lampu);
+  outline-offset: 2px;
+}
+
+.presetCustom button {
+  min-height: 38px;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--lampu);
+  color: var(--tinta);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dangerZone {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+/* Simbol satu warna, ikut warna teks. */
+.toolIcon {
+  color: var(--lampu);
+  font-weight: 800;
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.toolbar .tool:disabled {
+  opacity: 0.4;
   cursor: default;
 }
 
-.actions {
+.modalHead {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.meld {
-  display: inline-flex;
-  gap: 4px;
-  margin: 4px;
-  padding: 4px;
-  border: 1px dashed rgba(255, 255, 255, 0.35);
-  border-radius: 6px;
+.modalHead strong {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
-.tool {
-  margin-left: 8px;
-  font-size: 0.85em;
+/* Pengumuman joker: kartu kertas besar di bawah lampu. */
+.jokerPopup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 380px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: var(--kertas);
+  color: var(--tinta);
+  text-align: center;
+  font-size: 1.4em;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  box-shadow: 0 0 0 4px var(--lampu), 0 20px 50px rgb(0 0 0 / 0.5);
 }
 
-.reset {
-  margin-top: 8px;
+.jokerPopup .label {
+  color: #5d5468;
 }
 
 .jokerCard {
@@ -325,109 +1287,190 @@
   gap: 12px;
   font-size: 0.6em;
   font-weight: 400;
+  letter-spacing: 0;
+  text-align: left;
 }
 
-.jokerPopup {
+.jokerCard .card {
+  box-shadow: inset 0 0 0 3px var(--kertas), inset 0 0 0 4px rgb(30 26 36 / 0.2), 0 4px 12px rgb(0 0 0 / 0.25);
+}
+
+/* Cara main: bagian berjudul dipisah garis, contoh kartu nyata. */
+.howto {
+  max-width: 62ch;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.howto section {
+  padding-block: 14px;
+}
+
+.howto section + section {
+  border-top: 1px solid var(--garis);
+}
+
+.howto section:first-child {
+  padding-top: 0;
+}
+
+.howto h3 {
+  margin: 0 0 8px;
+  color: var(--lampu);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.howto p {
+  margin: 0;
+  color: #e6dcef;
+}
+
+.howto p + p {
+  margin-top: 6px;
+}
+
+.howto strong {
+  color: #fff;
+}
+
+.howtoSteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.howtoSteps li {
+  flex: 1 1 150px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--sarung-deep);
+  counter-increment: step;
+}
+
+.howtoSteps li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--lampu);
+  color: var(--tinta);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.howtoExamples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.howtoExamples figure {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  max-width: 360px;
-  text-align: center;
-  padding: 16px 28px;
-  border-radius: 12px;
-  background: #fff8dc;
-  color: #222;
-  font-size: 1.4em;
+  gap: 6px;
+  margin: 0;
+  flex: 1 1 170px;
+}
+
+.howtoExamples .meld {
+  align-self: flex-start;
+  border-style: solid;
+  background: #1d4f4c;
+}
+
+.howtoExamples figcaption {
+  color: #e6dcef;
+}
+
+.plus,
+.minus {
+  margin-left: 4px;
   font-weight: 700;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-
-.detail {
-  margin: 8px 0;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.detailSeat {
-  margin: 6px 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .plus {
-  margin-left: 6px;
-  font-weight: 700;
-  color: #9be39b;
+  color: #a6e3a1;
 }
 
 .minus {
-  margin-left: 2px;
-  font-weight: 700;
-  color: #f4a4a4;
-}
-
-.leftover {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 6px;
-}
-
-.target {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 8px 0;
-}
-
-.target input {
-  width: 96px;
+  color: var(--bahaya);
 }
 
 .history {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
 }
 
 .history th,
 .history td {
-  padding: 4px 6px;
+  padding: 7px 6px;
   text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid var(--garis);
+}
+
+.history thead th {
+  color: var(--kabut);
+  font-weight: 600;
 }
 
 .resultGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
 }
 
 .resultSeat {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border: 1px solid var(--garis);
+  border-radius: 10px;
+  background: var(--sarung-deep);
 }
 
-.resultSeat .card {
-  width: 40px;
-  height: 56px;
-  font-size: 0.8em;
+.resultSeat .card,
+.discardCard .card,
+.leftCard .card {
+  min-width: 0;
+  min-height: 0;
+  width: 38px;
+  height: 54px;
   padding: 0;
+  font-size: 0.75em;
 }
 
 .resultHead {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1.05em;
   margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--garis);
+}
+
+.resultHead .plus,
+.resultHead .minus {
+  font-size: 1.2em;
 }
 
 .resultSubtitle {
-  font-size: 0.8em;
-  opacity: 0.75;
   margin-top: 6px;
+  color: var(--kabut);
+  font-size: 0.8em;
 }
 
 .resultLine {
@@ -451,39 +1494,129 @@
   gap: 2px;
 }
 
-/* Layar kecil (HP di dalam Discord). Kartu dan teks dikecilkan, dan bagian meja turun ke baris berikutnya. */
+/* ---------- Layar kecil (HP di dalam Discord) ---------- */
 @media (max-width: 600px) {
   .page {
-    gap: 18px;
-    /* Jarak dari bezel atas HP, termasuk area aman (poni atau notch). */
-    padding: calc(env(safe-area-inset-top, 0px) + 36px) 14px 14px;
+    gap: 10px;
+    padding-inline: 10px;
+  }
+
+  .dock {
+    margin-inline: -10px;
+    width: calc(100% + 20px);
+    padding-inline: 10px;
+  }
+
+  /* Lawan sebaris di atas meja (urutan giliran kiri ke kanan), tidak mengelilingi, supaya hemat tempat. */
+  .table {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "left   top    right"
+      "felt   felt   felt"
+      "bottom bottom bottom";
+    /* Meja mengisi tinggi tersisa sampai dok, tanpa celah kosong. */
+    grid-template-rows: auto 1fr auto;
+    align-content: stretch;
+    align-items: start;
+    gap: 8px 6px;
+  }
+
+  .felt {
+    align-self: stretch;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .seatBox {
+    min-width: 0;
+    width: 100%;
+    padding: 10px 4px 6px;
+    font-size: 0.78rem;
+  }
+
+  .playerRow strong {
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Kombinasi lawan tidak boleh melebar ke kolom lawan lain. */
+  .seatMelds {
+    width: 100%;
+  }
+
+  .seatMelds .row {
+    gap: 3px;
+  }
+
+  .felt {
+    min-height: 200px;
+    padding: 14px 8px;
+    border-radius: 28px;
   }
 
   .header {
-    font-size: 0.95rem;
+    gap: 6px;
   }
 
-  .totals {
+  .toolbar {
+    gap: 4px;
+  }
+
+  .toolbar .tool {
+    padding: 4px 8px;
+  }
+
+  /* Cangkulan pemain pindah ke dok di atas tangan, posisinya tetap dekat jempol. */
+  .pileDocked {
+    display: none;
+  }
+
+  /* Di kanan, dekat jempol kanan. */
+  .dockDeck {
+    display: inline-flex;
+    order: 1;
+    margin-left: auto;
+  }
+
+  .hand > .label {
+    display: flex;
+    align-items: center;
     gap: 8px;
+  }
+
+  .deck {
+    width: 56px;
+    height: 78px;
+  }
+
+  .discard {
+    width: 100%;
+  }
+
+
+  /* Buangan bisa panjang: kartunya lebih kecil supaya muat banyak per baris. */
+  .discard .row {
+    gap: 4px;
+  }
+
+  .discard .card {
+    min-width: 38px;
+    min-height: 56px;
+    padding: 2px;
     font-size: 0.85rem;
   }
 
-  .opponents {
-    justify-content: center;
+  .discard .card .center {
+    display: none;
   }
 
-  .middle {
-    gap: 16px;
-  }
-
-  .pile,
   .discard {
-    flex: 1 1 100%;
     align-items: center;
   }
 
   .row {
-    gap: 6px;
     justify-content: center;
   }
 
@@ -502,9 +1635,11 @@
     font-size: 0.8em;
   }
 
-  .resultSeat .card {
-    width: 34px;
-    height: 48px;
+  .resultSeat .card,
+  .discardCard .card,
+  .leftCard .card {
+    width: 32px;
+    height: 46px;
     font-size: 0.7em;
   }
 
@@ -514,505 +1649,22 @@
 
   .actions button,
   .stock {
-    padding: 8px 10px;
+    padding: 10px 12px;
   }
-}
-
-/* Angka dan bunga di pojok kiri atas dan kanan bawah, seperti kartu pada umumnya. */
-.corner {
-  position: absolute;
-  top: 3px;
-  left: 4px;
-  font-size: 0.95em;
-  font-weight: 700;
-  line-height: 1.05;
-  text-align: center;
-}
-
-.cornerBottom {
-  top: auto;
-  left: auto;
-  bottom: 3px;
-  right: 4px;
-  transform: rotate(180deg);
-}
-
-.center {
-  font-size: 1.6em;
-  line-height: 1;
-}
-
-/* Tarik kartu tangan dengan pointer tanpa men-scroll halaman. */
-.fitRow button {
-  touch-action: none;
-}
-
-/* Baris kartu tangan. Jarak dan tumpukan diatur FitRow lewat margin di setiap slot. */
-.fitRow {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  width: 100%;
-  padding-top: 6px;
-}
-
-.slot {
-  flex: 0 0 auto;
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.modalBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.6);
-}
-
-.modal {
-  width: min(560px, 100%);
-  max-height: 85vh;
-  overflow-y: auto;
-  padding: 16px;
-  border-radius: 12px;
-  background: #0f5132;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-}
-
-.modalHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.targetCard {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.preset,
-.presetActive {
-  padding: 6px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 999px;
-  background: transparent;
-  color: #f8f9fa;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.presetActive {
-  border-color: #ffc107;
-  background: #ffc107;
-  color: #212529;
-}
-
-/* Nama dan avatar pemain. */
-.playerRow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.avatar {
-  flex: 0 0 auto;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.avatarFallback {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #5865f2;
-  color: #fff;
-  font-size: 0.75em;
-  font-weight: 700;
-}
-
-/* Tombol: gaya konsisten untuk semua aksi. Dibuat lebih spesifik supaya menang atas aturan dasar di atas. */
-.page button {
-  font-family: inherit;
-  transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s, opacity 0.15s, filter 0.15s;
-}
-
-.actions button,
-.stock,
-.target button {
-  min-height: 40px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #ffd54f, #ffc107);
-  color: #212529;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  box-shadow: 0 2px 0 #b38600, 0 4px 10px rgb(0 0 0 / 0.25);
-  cursor: pointer;
-}
-
-.actions button:hover:not(:disabled),
-.stock:hover:not(:disabled),
-.target button:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-.actions button:active:not(:disabled),
-.stock:active:not(:disabled),
-.target button:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 0 0 #b38600, 0 2px 6px rgb(0 0 0 / 0.25);
-}
-
-.actions button:disabled,
-.stock:disabled,
-.target button:disabled {
-  opacity: 0.45;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-.actions button.cekih {
-  background: linear-gradient(180deg, #7983f5, #5865f2);
-  color: #fff;
-  box-shadow: 0 2px 0 #3c45b5, 0 4px 10px rgb(0 0 0 / 0.25);
-}
-
-/* Tanpa ini, box-shadow di atas menimpa keadaan disabled dan tombol yang mati tetap terlihat aktif. */
-.actions button.cekih:disabled {
-  background: #5a5f7a;
-  color: rgb(255 255 255 / 0.7);
-  box-shadow: none;
-}
-
-/* Kartu penutup di buangan: dibuat pudar dan diberi label, supaya beda dengan buangan biasa. */
-.closing {
-  position: relative;
-  opacity: 0.55;
-}
-
-.closingTag {
-  position: absolute;
-  left: 50%;
-  top: -18px;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fde68a;
-  background: rgb(0 0 0 / 0.55);
-  padding: 1px 6px;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.discardCard {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.discardWho {
-  font-size: 11px;
-  opacity: 0.75;
-}
-
-.howto {
-  margin: 0;
-  padding-left: 20px;
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.howto li + li {
-  margin-top: 6px;
-}
-
-/* Label penutup muncul dengan pop kecil, dan pemberitahuan cekih berkedip tiga kali. */
-@keyframes tagPop {
-  from {
-    transform: translateX(-50%) scale(0.6);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes alertPulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgb(253 230 138 / 0);
-  }
-  50% {
-    box-shadow: 0 0 12px 3px rgb(253 230 138 / 0.8);
-  }
-}
-
-.closingTag {
-  animation: tagPop 0.35s ease-out;
-}
-
-.cekihAlert {
-  border-radius: 6px;
-  animation: alertPulse 1.2s ease-in-out 3;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .loadingFan,
+  .active,
+  .deckReady,
   .closingTag,
+  .closingFlip .card,
   .cekihAlert {
     animation: none;
   }
-}
 
-.actions button.danger {
-  background: transparent;
-  color: #ffb3b3;
-  border: 1px solid #ff8a8a;
-  box-shadow: none;
-}
-
-.actions button.danger:hover {
-  background: rgb(255 138 138 / 0.15);
-}
-
-.actions button.reset {
-  min-height: 36px;
-  padding: 8px 16px;
-  background: transparent;
-  color: #f8f9fa;
-  border: 1px dashed rgb(255 255 255 / 0.45);
-  box-shadow: none;
-  font-weight: 600;
-}
-
-.actions button.reset:hover:not(:disabled) {
-  background: rgb(255 255 255 / 0.1);
-}
-
-.tool {
-  min-height: 30px;
-  padding: 4px 12px;
-  border: 1px solid rgb(255 255 255 / 0.35);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.08);
-  color: #f8f9fa;
-  font-size: 0.8em;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tool:hover {
-  background: rgb(255 255 255 / 0.18);
-}
-
-.preset,
-.presetActive {
-  min-height: 36px;
-  padding: 6px 16px;
-}
-
-.preset:hover {
-  background: rgb(255 255 255 / 0.12);
-}
-
-/* Tombol pembuka modal (Hasil ronde, Riwayat poin). */
-.toolbar .tool {
-  min-height: 34px;
-  padding: 6px 16px;
-  border: 1px solid #ffc107;
-  background: rgb(255 193 7 / 0.12);
-  color: #ffd54f;
-  font-size: 0.9em;
-  letter-spacing: 0.01em;
-}
-
-.toolbar .tool:hover {
-  background: rgb(255 193 7 / 0.25);
-}
-
-/* Modal: judul dan tombol tutup lebih rapi. */
-.modalHead strong {
-  font-size: 1.1em;
-  letter-spacing: 0.01em;
-}
-
-.modalHead .tool {
-  min-height: 30px;
-  padding: 4px 14px;
-}
-
-/* Tabel riwayat poin. */
-.history {
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.history thead th {
-  padding: 8px 6px;
-  background: rgb(0 0 0 / 0.35);
-  font-weight: 700;
-  font-size: 0.85em;
-  letter-spacing: 0.02em;
-}
-
-.history tbody tr:nth-child(even) {
-  background: rgb(255 255 255 / 0.05);
-}
-
-.history tbody td {
-  padding: 7px 6px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Kartu hasil per pemain. */
-.resultSeat {
-  box-shadow: inset 0 0 0 1px rgb(255 193 7 / 0.35);
-}
-
-.resultHead {
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgb(255 255 255 / 0.15);
-}
-
-.resultHead strong {
-  font-size: 1.05em;
-}
-
-.resultHead .plus,
-.resultHead .minus {
-  font-size: 1.15em;
-  font-variant-numeric: tabular-nums;
-}
-
-.resultLine {
-  font-variant-numeric: tabular-nums;
-}
-
-/* Kartu lawan: nama dan avatar di atas, jumlah kartu kecil di bawah. */
-.opponent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 96px;
-  padding: 8px 12px;
-  border-radius: 10px;
-}
-
-/* Pemain yang sedang giliran: bingkai emas yang berdenyut. */
-.active {
-  border-radius: 10px;
-  box-shadow: 0 0 0 2px #ffc107;
-  animation: activePulse 1.4s ease-in-out infinite;
-}
-
-@keyframes activePulse {
-  50% {
-    box-shadow: 0 0 0 2px #ffc107, 0 0 16px 4px rgb(255 193 7 / 0.55);
+  .loadingBar > div,
+  .card {
+    transition: none;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .active {
-    animation: none;
-  }
-}
-
-.opponentCount {
-  font-size: 0.8em;
-  opacity: 0.8;
-}
-
-/* Input target poin: gelap, membulat, dan ada garis fokus emas. */
-.target input {
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid rgb(255 255 255 / 0.3);
-  border-radius: 10px;
-  background: rgb(0 0 0 / 0.3);
-  color: #f8f9fa;
-  font-size: 1em;
-  font-variant-numeric: tabular-nums;
-  outline: none;
-}
-
-.target input::placeholder {
-  color: rgb(255 255 255 / 0.5);
-}
-
-.target input:focus {
-  border-color: #ffc107;
-  box-shadow: 0 0 0 3px rgb(255 193 7 / 0.25);
-}
-
-.target input:disabled {
-  opacity: 0.5;
-}
-
-/* Tombol penyusunan kombinasi: gaya sama dengan tombol aksi. */
-.groupActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.groupActions button {
-  min-height: 40px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #ffd54f, #ffc107);
-  color: #212529;
-  font-weight: 700;
-  box-shadow: 0 2px 0 #b38600, 0 4px 10px rgb(0 0 0 / 0.25);
-  cursor: pointer;
-}
-
-.groupActions button:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-.groupActions button:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 0 0 #b38600, 0 2px 6px rgb(0 0 0 / 0.25);
-}
-
-.groupActions button:disabled {
-  opacity: 0.45;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-/* Kartu joker di buangan: tertutup, tidak menunjukkan angka atau bunga. */
-.faceDown {
-  background: repeating-linear-gradient(45deg, #1d4ed8 0 6px, #1e40af 6px 12px);
-  color: rgb(255 255 255 / 0.85);
-  font-weight: 700;
 }

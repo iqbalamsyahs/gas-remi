@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Intent } from "../../server/room";
 import type { PlayerView } from "../../server/view";
-import { connectDiscord } from "../../src/client/discord";
+import { connectDiscord, devSession } from "../../src/client/discord";
 import { messageForError } from "../../src/client/messages";
 import { connectRoom, type RoomConnection } from "../../src/client/realtime";
 import { Loading } from "./Loading";
@@ -25,7 +25,9 @@ export default function ActivityPage() {
     async function start() {
       let session;
       try {
-        session = await connectDiscord(setStep);
+        const params = new URLSearchParams(location.search);
+        const devName = params.get("dev");
+        session = devName ? devSession(devName, params.get("room")) : await connectDiscord(setStep);
       } catch (err) {
         if (!cancelled) setFailure(err instanceof Error ? err.message : "Gagal terhubung ke Discord.");
         return;

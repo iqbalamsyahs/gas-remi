@@ -53,6 +53,12 @@ export async function connectDiscord(onStep: (step: 1 | 2) => void): Promise<Dis
   }
 }
 
+// Main tanpa Discord: buka /activity?dev=nama (opsional &room=x). Hanya diterima Worker yang dijalankan
+// dengan DEV_AUTH=1 (pnpm worker:dev:local). Di produksi token ini ditolak seperti token palsu lainnya.
+export function devSession(name: string, room: string | null): DiscordSession {
+  return { instanceId: `dev-${room ?? "meja"}`, accessToken: `dev:${name}` };
+}
+
 function describeError(err: unknown): string {
   if (err instanceof Error) return err.message;
   if (typeof err === "object" && err !== null) return JSON.stringify(err);

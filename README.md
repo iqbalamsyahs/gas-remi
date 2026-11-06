@@ -20,6 +20,17 @@ pnpm test                    # tes logika ruang dan aturan
 
 Di luar Discord, isi `NEXT_PUBLIC_WS_URL=ws://localhost:8788` di `.env.local`. Di dalam Discord, kosongkan variabel itu.
 
+### Main tanpa Discord
+
+Untuk cek tampilan dan main bareng bot tanpa membuka Discord:
+
+```bash
+pnpm worker:dev:local        # Worker di port 8787 dengan DEV_AUTH=1 (login tanpa Discord)
+pnpm dev
+```
+
+Buka `http://localhost:3000/activity?dev=Nama`. Tab lain dengan `?dev=Nama2` duduk di meja yang sama. Tambahkan `&room=x` untuk meja terpisah. Tidak perlu `NEXT_PUBLIC_WS_URL`: mode dev otomatis memakai `ws://localhost:8787`. Kalau port itu terpakai, matikan Worker lain dulu. `DEV_AUTH` tidak ada di `wrangler.jsonc`, jadi Worker produksi tetap menolak login dev.
+
 ## Deploy
 
 **Worker (Cloudflare)**

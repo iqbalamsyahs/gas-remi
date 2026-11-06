@@ -45,7 +45,6 @@ export function Loading({ step, note, failure }: { step: number; note: string; f
         ))}
       </div>
       <h1 className={styles.loadingTitle}>Gas Remi</h1>
-      <img className={styles.loadingBanner} src="/activity-banner.svg" alt="" />
       {blocked && (
         <button type="button" className={styles.tool}>
           🔊 Putar musik

@@ -21,7 +21,8 @@ const BACKOFF_MS = [1000, 2000, 4000, 8000];
 // NEXT_PUBLIC_WS_URL dipakai saat dijalankan di luar Discord, misalnya ws://localhost:8787.
 function roomUrl(instanceId: string): string {
   const id = encodeURIComponent(instanceId);
-  const base = process.env.NEXT_PUBLIC_WS_URL;
+  // Mode dev (instanceId "dev-...") tanpa NEXT_PUBLIC_WS_URL: Worker lokal dari pnpm worker:dev:local.
+  const base = process.env.NEXT_PUBLIC_WS_URL || (instanceId.startsWith("dev-") ? "ws://localhost:8787" : "");
   if (base) return `${base}/room/${id}`;
   const scheme = location.protocol === "https:" ? "wss" : "ws";
   return `${scheme}://${location.host}/.proxy/ws/room/${id}`;
