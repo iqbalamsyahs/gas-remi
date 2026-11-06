@@ -3,7 +3,7 @@ const MESSAGES: Record<string, string> = {
   // Koneksi dan sesi
   NOT_ENOUGH_PLAYERS: "Menunggu 4 pemain di Activity ini...",
   NOT_SEATED: "Kamu tidak terdaftar sebagai pemain di sesi ini.",
-  SPECTATOR: "Kamu sedang menonton. Klik \"Ikut main\" kalau ada kursi.",
+  SPECTATOR: "Kamu sedang menonton. Klik \"Duduk di sini\" di kursi yang bisa diisi.",
   NO_SEAT: "Tidak ada kursi yang bisa diisi sekarang.",
   ALREADY_SEATED: "Kamu sudah duduk di meja.",
   INVALID_TOKEN: "Login Discord tidak valid. Buka ulang Activity.",

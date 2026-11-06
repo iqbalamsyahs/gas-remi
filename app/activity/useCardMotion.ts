@@ -32,7 +32,7 @@ export function useCardMotion(rootRef: RefObject<HTMLElement | null>, view: Play
     const old = prev.current;
     const next: Snapshot = {
       cards: new Map(),
-      stock: root.querySelector<HTMLElement>('[data-zone="stock"]')?.getBoundingClientRect() ?? null,
+      stock: visibleStock(root)?.getBoundingClientRect() ?? null,
       rounds: view.rounds,
       stockCount: view.board?.stockCount ?? 0,
       handCounts: [...view.handCounts],
@@ -95,7 +95,7 @@ export function useCardMotion(rootRef: RefObject<HTMLElement | null>, view: Play
     const deck = old.stock;
     const seat = drawer !== -1 ? root.querySelector<HTMLElement>(`[data-seat="${drawer}"]`) : null;
     if (!reduced && seat && deck && next.stockCount < old.stockCount) {
-      ghostCard(deck, seat.getBoundingClientRect());
+      ghostCard(deck, seat.getBoundingClientRect(), visibleStock(root));
     }
   }, [rootRef, view]);
 }
@@ -128,9 +128,16 @@ function fly(el: HTMLElement, from: DOMRect, to: DOMRect, flip: boolean, delay: 
   }
 }
 
+// Cangkulan ada di meja (desktop) dan di dok (HP); ambil yang sedang tampil.
+function visibleStock(root: HTMLElement): HTMLElement | null {
+  return [...root.querySelectorAll<HTMLElement>('[data-zone="stock"]')].find((el) => el.offsetParent !== null) ?? null;
+}
+
 // Kartu belakang sementara dari cangkulan ke kursi lawan. Dihapus setelah animasi selesai.
-function ghostCard(from: DOMRect, to: DOMRect): void {
+// Motif belakang disalin dari cangkulan supaya sama dengan tema CSS (ghost ada di luar scope CSS module).
+function ghostCard(from: DOMRect, to: DOMRect, deckEl: HTMLElement | null): void {
   const ghost = document.createElement("div");
+  const back = deckEl ? getComputedStyle(deckEl) : null;
   Object.assign(ghost.style, {
     position: "fixed",
     left: `${from.left}px`,
@@ -138,7 +145,9 @@ function ghostCard(from: DOMRect, to: DOMRect): void {
     width: `${from.width}px`,
     height: `${from.height}px`,
     borderRadius: "6px",
-    background: "linear-gradient(135deg, #1e3a8a, #3b5bdb)",
+    backgroundColor: back?.backgroundColor ?? "#1f5e5b",
+    backgroundImage: back?.backgroundImage ?? "none",
+    backgroundSize: back?.backgroundSize ?? "auto",
     border: "2px solid #fff",
     boxSizing: "border-box",
     pointerEvents: "none",

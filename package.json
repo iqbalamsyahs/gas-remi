@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "worker:dev": "wrangler dev -c worker/wrangler.jsonc",
+    "worker:dev:local": "wrangler dev -c worker/wrangler.jsonc --var DEV_AUTH:1 --port 8787",
     "worker:deploy": "wrangler deploy -c worker/wrangler.jsonc",
     "worker:secret": "wrangler secret put DISCORD_BOT_TOKEN -c worker/wrangler.jsonc"
   },

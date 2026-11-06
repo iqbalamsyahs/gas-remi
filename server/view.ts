@@ -96,7 +96,7 @@ function playerInfo(room: Room, seat: number): PlayerInfo {
   if (id === "") return { kind: "empty", name: "Kosong", avatarUrl: null };
   if (id.startsWith(BOT_PREFIX)) return { kind: "bot", name: `Bot ${seat + 1}`, avatarUrl: BOT_AVATAR };
   const profile = room.profiles[seat];
-  return { kind: "human", name: profile?.name ?? "Pemain", avatarUrl: profile?.avatarUrl ?? null };
+  return { kind: "human", name: profile?.name ?? "Pemain", avatarUrl: profile?.avatarUrl || null };
 }
 
 export function viewFor(room: Room, seat: PlayerId | null): PlayerView {

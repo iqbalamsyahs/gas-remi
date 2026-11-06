@@ -10,7 +10,12 @@ export interface Env {
   DISCORD_APPLICATION_ID: string;
   // Secret: wrangler secret put DISCORD_BOT_TOKEN
   DISCORD_BOT_TOKEN: string;
+  // Hanya untuk dev lokal (pnpm worker:dev:local). Jangan pernah diisi di produksi: login tanpa Discord.
+  DEV_AUTH?: string;
 }
+
+// Mode dev: token "dev:<nama>" dipakai langsung sebagai user ID, tanpa verifikasi Discord.
+const DEV_PREFIX = "dev:";
 
 // Kursi tidak disimpan di attachment: selalu dicari dari room.seats, supaya tidak usang setelah meja dibuat ulang
 // atau kursi berpindah. User yang tidak ada di kursi adalah penonton.
@@ -88,9 +93,10 @@ export class Table extends DurableObject<Env> {
   }
 
   private async hello(ws: WebSocket, msg: Extract<ClientMessage, { type: "hello" }>) {
+    const dev = this.isDev(msg.token);
     let userId: string;
     try {
-      userId = await verifyDiscordUserId(msg.token);
+      userId = dev ? msg.token.slice(0, 24) : await verifyDiscordUserId(msg.token);
     } catch {
       ws.close(4001, "INVALID_TOKEN");
       return;
@@ -114,7 +120,7 @@ export class Table extends DurableObject<Env> {
     // jadi ruang yang dimuat sebelum fetch bisa sudah usang saat disimpan dan menimpa langkah pemain lain.
     const before = await this.load();
     // Hanya anggota instance Activity yang boleh masuk, sebagai pemain maupun penonton.
-    if (before === null || !before.seats.includes(userId)) {
+    if (!dev && (before === null || !before.seats.includes(userId))) {
       let members: string[];
       try {
         members = await this.instanceMembers(msg.instanceId);
@@ -123,7 +129,7 @@ export class Table extends DurableObject<Env> {
       }
       if (!members.includes(userId)) return this.reject(ws, "NOT_SEATED");
     }
-    const profile = await fetchProfile(userId, this.env.DISCORD_BOT_TOKEN);
+    const profile = await this.profileOf(userId);
 
     let room = await this.load();
     if (room === null || room.status === "finished" || room.status === "cancelled") {
@@ -145,7 +151,7 @@ export class Table extends DurableObject<Env> {
 
   private async intent(ws: WebSocket, userId: string, intent: Intent) {
     // Profil diambil sebelum ruang dimuat, supaya tidak ada fetch di antara load dan commit (lihat hello).
-    const profile = intent.type === "sit" ? await fetchProfile(userId, this.env.DISCORD_BOT_TOKEN) : null;
+    const profile = intent.type === "sit" ? await this.profileOf(userId) : null;
     const loaded = await this.load();
     if (loaded === null) return ws.send(JSON.stringify({ type: "error", error: "ROOM_NOT_FOUND" }));
     const seat = loaded.seatOf(userId);
@@ -176,6 +182,16 @@ export class Table extends DurableObject<Env> {
     // Commit tetap dijalankan walaupun intent ditolak, karena tick() bisa sudah mengubah state.
     await this.commit(room);
     if (error !== null) ws.send(JSON.stringify({ type: "error", error }));
+  }
+
+  private isDev(token: string): boolean {
+    return this.env.DEV_AUTH === "1" && token.startsWith(DEV_PREFIX) && token.length > DEV_PREFIX.length;
+  }
+
+  // Pemain dev tidak punya akun Discord: nama dari token, tanpa avatar (klien memakai huruf awal).
+  private async profileOf(userId: string) {
+    if (userId.startsWith(DEV_PREFIX)) return { name: userId.slice(DEV_PREFIX.length), avatarUrl: "" };
+    return fetchProfile(userId, this.env.DISCORD_BOT_TOKEN);
   }
 
   private reject(ws: WebSocket, error: string) {
