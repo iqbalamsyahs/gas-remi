@@ -43,6 +43,7 @@ const MESSAGES: Record<string, string> = {
   // Cekih
   CEKIH_SELF: "Kamu tidak bisa menyebut cekih ke dirimu sendiri.",
   CEKIH_NOT_ALLOWED: "Belum bisa menyebut cekih. Tanganmu belum tinggal satu kartu lagi untuk tutup.",
+  CEKIH_NOT_NOW: "Cekih hanya bisa sebelum cangkul/ambil buangan atau setelah buang.",
   CEKIH_NOT_FOUND: "Tidak ada cekih ke pemain itu yang bisa dibatalkan.",
   CEKIH_ALREADY_ACTIVE: "Cekih ke pemain itu sudah aktif.",
   CEKIH_TARGET_NOT_ALLOWED: "Cekih itu tidak bisa ke pemain itu. Lihat tombol cekih yang aktif.",

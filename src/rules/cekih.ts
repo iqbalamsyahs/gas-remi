@@ -50,6 +50,8 @@ export function cekihTargets(caller: PlayerId, hand: Card[], jokerRank: Rank | n
 export function callCekih(state: RoundState, caller: PlayerId, target: PlayerId): RoundState {
   if (state.result !== null) throw new Error("ROUND_OVER");
   if (caller === target) throw new Error("CEKIH_SELF");
+  // Setelah cangkul/ambil buangan dan sebelum buang, tangan sedang lebih satu kartu: cekih tidak dihitung.
+  if (state.turn === caller && state.phase === "discard") throw new Error("CEKIH_NOT_NOW");
   const allowed = cekihTargets(caller, state.hands[caller], state.jokerRank, state.laidPureSeri[caller]);
   if (!allowed.includes(target)) throw new Error("CEKIH_TARGET_NOT_ALLOWED");
   const exists = state.cekih.some((c) => c.caller === caller && c.target === target);

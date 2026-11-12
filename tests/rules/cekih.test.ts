@@ -101,3 +101,9 @@ test("hand one card short but without any pure seri cannot call cekih", () => {
   expect(canCallCekih(hand, null, false)).toBe(false);
   expect(canCallCekih(hand, null, true)).toBe(true);
 });
+
+test("cekih is refused after drawing and before discarding on your own turn", () => {
+  expect(() => callCekih(round({ hands: [READY, [], [], []], phase: "discard" }), 0, 2)).toThrow("CEKIH_NOT_NOW");
+  // Giliran pemain lain yang sedang di fase buang tidak menghalangi.
+  expect(callCekih(round({ hands: [READY, [], [], []], phase: "discard", turn: 1 }), 0, 2).cekih).toHaveLength(1);
+});

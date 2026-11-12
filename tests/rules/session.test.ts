@@ -33,6 +33,13 @@ describe("applyRound overtake reset", () => {
     // B=0 sekarang di atas A=-50. A tersalip, tapi skornya minus, jadi tidak direset.
     expect(next.totals).toEqual([-50, 0, 0, 0]);
   });
+
+  test("overtaken player below 100 does not reset, at 100 does", () => {
+    // A=99 tersalip B=150: di bawah 100, tidak direset.
+    expect(applyRound(session({ totals: [99, 50, 0, 0] }), [0, 100, 0, 0]).totals).toEqual([99, 150, 0, 0]);
+    // A=100 tersalip B=150: direset.
+    expect(applyRound(session({ totals: [100, 50, 0, 0] }), [0, 100, 0, 0]).totals).toEqual([0, 150, 0, 0]);
+  });
 });
 
 describe("applyRound winner and rounds", () => {

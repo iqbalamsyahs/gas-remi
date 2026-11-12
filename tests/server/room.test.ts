@@ -513,3 +513,14 @@ test("score preview is only available in the scoring phase", () => {
   expect(room.scorePreview()).toBeNull();
   expect(() => room.handle(0, { type: "scoring_preview", melds: [] })).toThrow("WRONG_PHASE");
 });
+
+test("a player who left reclaims their seat while it is still a bot", () => {
+  const room = newRoom();
+  room.leave(1);
+  expect(room.reclaim("u1")).toBe(1);
+  expect(room.seats[1]).toBe("u1");
+  room.leave(2);
+  room.sit("u9", 2);
+  expect(room.reclaim("u2")).toBeNull();
+  expect(room.seats[2]).toBe("u9");
+});

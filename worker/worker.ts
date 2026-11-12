@@ -78,10 +78,11 @@ export class Table extends DurableObject<Env> {
     if (attachment === null) return;
     const room = await this.load();
     if (room === null) return;
-    // Penonton yang putus tidak menjeda permainan.
+    // Pemain yang putus/keluar langsung diganti bot (kursi dikosongkan saat menunggu). Penonton diabaikan.
+    // Kalau kembali, pemain bisa duduk lagi di kursi bot itu dan meneruskan tangan serta poinnya.
     const seat = room.seatOf(attachment.userId);
     if (seat === null) return;
-    room.disconnect(seat);
+    room.leave(seat);
     await this.commit(room);
   }
 
@@ -139,7 +140,7 @@ export class Table extends DurableObject<Env> {
     }
     room.tick();
 
-    const seat = room.seatOf(userId);
+    const seat = room.seatOf(userId) ?? room.reclaim(userId);
     if (seat !== null) {
       // Profil diambil saat pertama kali duduk. Kalau belum ada (misal gagal sebelumnya), diisi ulang.
       if (room.profiles[seat] === null) room.setProfile(seat, profile);

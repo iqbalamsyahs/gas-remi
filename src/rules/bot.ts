@@ -1,5 +1,5 @@
 import { baseValue, type Card, type Rank } from "./cards";
-import { canCallCekih } from "./cekih";
+import { canCallCekih, cekihTargets } from "./cekih";
 import type { PlayerId } from "./opening";
 import { canClose, canPartition, removeCards } from "./partition";
 import { subsets } from "./subsets";
@@ -18,8 +18,9 @@ export type BotIntent =
 // Strategi sederhana: ambil dari buangan kalau membentuk kombinasi, turunkan seri murni, cekih saat siap tutup,
 // dan buang kartu yang paling tidak berguna di tangan (bukan joker). Kalau bisa tutup, bot tutup.
 export function chooseBotPlay(round: RoundState, seat: PlayerId): BotIntent {
-  if (round.phase === "draw") return pickupChoice(round, seat) ?? { type: "draw_stock" };
-  return layChoice(round, seat) ?? cekihChoice(round, seat) ?? discardChoice(round, seat);
+  // Cekih diputuskan sebelum cangkul/ambil buangan, saat tangan belum lebih satu kartu.
+  if (round.phase === "draw") return cekihChoice(round, seat) ?? pickupChoice(round, seat) ?? { type: "draw_stock" };
+  return layChoice(round, seat) ?? discardChoice(round, seat);
 }
 
 // Ambil dari buangan (dari atas ke bawah) kalau kartu target bersama 2-3 kartu tangan membentuk kombinasi sah.
@@ -58,7 +59,7 @@ function cekihChoice(round: RoundState, seat: PlayerId): BotIntent | null {
   const mine = round.cekih.filter((c) => c.caller === seat);
   const ready = canCallCekih(round.hands[seat], round.jokerRank, round.laidPureSeri[seat]);
   if (mine.length > 0 && !ready) return { type: "cekih_batal", target: mine[0].target };
-  if (mine.length === 0 && ready) return { type: "cekih", target: (seat + 3) % 4 };
+  if (mine.length === 0 && ready) return { type: "cekih", target: cekihTargets(seat, round.hands[seat], round.jokerRank, round.laidPureSeri[seat])[0] };
   return null;
 }
 
