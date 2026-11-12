@@ -150,6 +150,6 @@ Permainan terdiri dari beberapa sesi (ronde); pemenangnya pemain pertama yang me
 - Di akhir setiap sesi, dicek urutan skor total sebelum dan sesudah sesi.
 - Pemain yang skornya **tersalip** (sebelumnya lebih tinggi, sekarang lebih rendah dari pemain lain) skor totalnya direset ke **0**.
 - Jika skor sama persis, tidak ada yang direset.
-- Pemain dengan skor total minus yang tersalip tidak direset.
+- Pemain yang tersalip dengan skor total di bawah 100 (termasuk minus) tidak direset.
 
 Contoh: sebelum sesi A = 300, B = 250. Setelah sesi B menjadi 350 dan A tetap 300. A tersalip, sehingga skor A menjadi 0.

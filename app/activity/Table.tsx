@@ -293,14 +293,16 @@ export function Table({ view, error, onIntent }: TableProps) {
   // Penonton tidak punya kursi: tanpa tangan dan tanpa aksi.
   const spectator = view.you === null;
   // Cekih: tombol hanya tampil kalau tangan sudah tinggal satu kartu lagi untuk tutup.
+  // Tidak dihitung saat giliran sendiri sudah cangkul/ambil buangan dan belum buang (tangan sedang lebih satu kartu).
   const myCekih = board?.cekih.filter((c) => c.caller === view.you) ?? [];
   const cekihReady =
     board !== null &&
     view.you !== null &&
     view.status === "playing" &&
+    !(myTurn && discardPhase) &&
     canCallCekih(view.hand, board.jokerRank, board.laidPureSeri[view.you]);
   const allowedTargets =
-    view.you === null ? [] : cekihTargets(view.you, view.hand, board?.jokerRank ?? null, board?.laidPureSeri[view.you] ?? false);
+    !cekihReady || view.you === null ? [] : cekihTargets(view.you, view.hand, board?.jokerRank ?? null, board?.laidPureSeri[view.you] ?? false);
   const myConfirmed = scoringPhase && view.you !== null && view.scoring!.confirmed[view.you];
   const jokerRank = board?.jokerRank ?? null;
 
@@ -499,6 +501,76 @@ export function Table({ view, error, onIntent }: TableProps) {
     : activeSeat !== null
       ? `Giliran ${nameOf(activeSeat)}`
       : null;
+  // Tombol aksi di kepala dok (di atas kartu), supaya tidak perlu scroll. Termasuk cekih.
+  const actions = (
+        <section className={styles.actions}>
+          {inOpening && playable && view.hand.length === 8 && (
+            <button
+              type="button"
+              disabled={selected.length !== 1}
+              onClick={() => send({ type: "opening_discard", cardId: selected[0] })}
+            >
+              Buang kartu terpilih
+            </button>
+          )}
+          {drawPhase && playable && (
+            <button
+              type="button"
+              disabled={!canPickup}
+              onClick={() => send({ type: "pickup", targetId: pickupTarget!, handIds: selected, discardIds: pickupExtra })}
+            >
+              Ambil dari buangan
+            </button>
+          )}
+          {(drawPhase || discardPhase) && playable && !inOpening && board && !board.laidPureSeri[view.you!] && (
+            <button
+              type="button"
+              disabled={!canLayDown}
+              onClick={() => send({ type: "lay_down", cardIds: selected })}
+            >
+              Turunkan seri murni
+            </button>
+          )}
+          {discardPhase && playable && !inOpening && (
+            <button
+              type="button"
+              disabled={!canDiscard}
+              onClick={() => send({ type: "discard", cardId: selected[0] })}
+            >
+              Buang
+            </button>
+          )}
+          {view.status === "playing" && !spectator && (
+            <>
+              {view.players.map((info, seat) =>
+                !cekihReady || !allowedTargets.includes(seat as PlayerId) || info.kind === "empty" || myCekih.some((c) => c.target === seat) ? null : (
+                  <button
+                    key={seat}
+                    type="button"
+                    className={styles.cekih}
+                    onClick={() => onIntent({ type: "cekih", target: seat })}
+                  >
+                    Cekih {info.name}
+                  </button>
+                ),
+              )}
+              {myCekih.map((c) => (
+                <button
+                  key={c.target}
+                  type="button"
+                  className={styles.danger}
+                  onClick={() => onIntent({ type: "cekih_batal", target: c.target })}
+                >
+                  Batalkan cekih ke {nameOf(c.target)}
+                </button>
+              ))}
+              {cekihReady && allowedTargets.length > 0 && (
+                <span className={styles.hint}>Kamu tinggal butuh satu kartu lagi. Kartu itu diharapkan dari {nameOf(allowedTargets[0])}.</span>
+              )}
+            </>
+          )}
+        </section>
+  );
   const waiting = scoringPhase
     ? view.scoring!.confirmed.map((ok, seat) => (ok ? null : nameOf(seat))).filter(Boolean).join(", ")
     : "";
@@ -688,22 +760,34 @@ export function Table({ view, error, onIntent }: TableProps) {
       </section>
 
       <div className={`${styles.dock} ${playable ? styles.dockActive : ""}`}>
+        {/* Kepala dok satu baris: nama, urutkan, status giliran + petunjuk, lalu tombol aksi. Kartu di bawahnya. */}
         {!spectator && view.you !== null && (
           <div className={styles.dockHead}>
             <span className={styles.playerRow}>
               <Avatar info={view.players[view.you]} size={24} />
               <strong>{nameOf(view.you)}</strong>
               <span className={styles.opponentCount}>{view.totals[view.you]} poin</span>
+              {!(scoringPhase && !myConfirmed) && (
+                <button type="button" className={styles.tool} onClick={() => setOrder([...view.hand].sort(bySuitThenRank).map((card) => card.id))}>
+                  Urutkan
+                </button>
+              )}
             </span>
-            {board && board.table[view.you].length > 0 && !scoringPhase && (
-              <div className={styles.myMelds} aria-label="Kombinasi yang kamu turunkan">
-                <Melds melds={board.table[view.you]} jokerRank={board.jokerRank} />
-              </div>
+            {(turnLine || actionHint) && (
+              <span className={styles.statusLine}>
+                {turnLine && <span className={playable ? styles.turnLineMine : styles.turnLine}>{turnLine}</span>}
+                {actionHint && <span className={styles.hintInline}>{actionHint}</span>}
+              </span>
             )}
-            {turnLine && <span className={playable ? styles.turnLineMine : styles.turnLine}>{turnLine}</span>}
+            {actions}
+            {!(scoringPhase && !myConfirmed) && <span className={styles.dockDeck}>{deck}</span>}
           </div>
         )}
-        {actionHint && <p className={styles.hint}>{actionHint}</p>}
+        {!spectator && board && view.you !== null && board.table[view.you].length > 0 && !scoringPhase && (
+          <div className={styles.myMelds} aria-label="Kombinasi yang kamu turunkan">
+            <Melds melds={board.table[view.you]} jokerRank={board.jokerRank} />
+          </div>
+        )}
 
         {spectator ? null : scoringPhase && !myConfirmed ? (
           <section className={styles.hand}>
@@ -752,14 +836,7 @@ export function Table({ view, error, onIntent }: TableProps) {
             </div>
           </section>
         ) : (
-          <section className={styles.hand}>
-            <div className={styles.label}>
-              <span className={styles.dockDeck}>{deck}</span>
-              Kartumu{" "}
-              <button type="button" className={styles.tool} onClick={() => setOrder([...view.hand].sort(bySuitThenRank).map((card) => card.id))}>
-                Urutkan
-              </button>
-            </div>
+          <section className={styles.hand} aria-label="Kartumu">
             <FitRow count={hand.length} hand>
               {hand.map((card) => (
                 <CardFace
@@ -783,75 +860,6 @@ export function Table({ view, error, onIntent }: TableProps) {
             </FitRow>
           </section>
         )}
-
-        {/* Bar aksi: tetap di paling bawah, termasuk cekih. */}
-        <section className={styles.actions}>
-          {inOpening && playable && view.hand.length === 8 && (
-            <button
-              type="button"
-              disabled={selected.length !== 1}
-              onClick={() => send({ type: "opening_discard", cardId: selected[0] })}
-            >
-              Buang kartu terpilih
-            </button>
-          )}
-          {drawPhase && playable && (
-            <button
-              type="button"
-              disabled={!canPickup}
-              onClick={() => send({ type: "pickup", targetId: pickupTarget!, handIds: selected, discardIds: pickupExtra })}
-            >
-              Ambil dari buangan
-            </button>
-          )}
-          {(drawPhase || discardPhase) && playable && !inOpening && board && !board.laidPureSeri[view.you!] && (
-            <button
-              type="button"
-              disabled={!canLayDown}
-              onClick={() => send({ type: "lay_down", cardIds: selected })}
-            >
-              Turunkan seri murni
-            </button>
-          )}
-          {discardPhase && playable && !inOpening && (
-            <button
-              type="button"
-              disabled={!canDiscard}
-              onClick={() => send({ type: "discard", cardId: selected[0] })}
-            >
-              Buang
-            </button>
-          )}
-          {view.status === "playing" && !spectator && (
-            <>
-              {view.players.map((info, seat) =>
-                !cekihReady || !allowedTargets.includes(seat as PlayerId) || info.kind === "empty" || myCekih.some((c) => c.target === seat) ? null : (
-                  <button
-                    key={seat}
-                    type="button"
-                    className={styles.cekih}
-                    onClick={() => onIntent({ type: "cekih", target: seat })}
-                  >
-                    Cekih {info.name}
-                  </button>
-                ),
-              )}
-              {myCekih.map((c) => (
-                <button
-                  key={c.target}
-                  type="button"
-                  className={styles.danger}
-                  onClick={() => onIntent({ type: "cekih_batal", target: c.target })}
-                >
-                  Batalkan cekih ke {nameOf(c.target)}
-                </button>
-              ))}
-              {cekihReady && allowedTargets.length > 0 && (
-                <span className={styles.hint}>Kamu tinggal butuh satu kartu lagi. Kartu itu diharapkan dari {nameOf(allowedTargets[0])}.</span>
-              )}
-            </>
-          )}
-        </section>
       </div>
       {panel === "result" && view.roundDetail !== null && (
         <Modal title="Skor" onClose={() => setPanel(null)}>

@@ -39,6 +39,9 @@ export interface RoundState {
   // Pemilik kartu buangan yang masuk kombinasi pada giliran ini (target dan kartu di atasnya yang ikut kombinasi).
   // Kartu di atas target yang hanya masuk tangan tidak dihitung untuk cekih.
   takenOwners: PlayerId[];
+  // Per kartu buangan: pemain yang sudah mencekih si pembuang saat kartu itu dibuang. Cekih yang disebut setelah
+  // kartunya dibuang terlambat dan tidak berlaku untuk kartu itu. Opsional: snapshot lama belum punya.
+  cekihAtDiscard?: Record<string, PlayerId[]>;
 }
 
 const CLOSED_FROM_STOCK_BONUS = 250;
@@ -103,7 +106,11 @@ export function pickFromDiscard(
     phase: "discard",
     drewFrom: "discard",
     pickedFromDiscard: state.pickedFromDiscard.map((flag, seat) => (seat === player ? true : flag)),
-    takenOwners: [target, ...fromDiscard].map((card) => state.discardOwner[card.id]),
+    // Hanya kartu yang dibuang setelah pemain ini mencekih pemiliknya yang bisa memicu hukuman cekih.
+    // Kartu tanpa catatan (snapshot lama) tetap dihitung seperti aturan sebelumnya.
+    takenOwners: [target, ...fromDiscard]
+      .filter((card) => state.cekihAtDiscard?.[card.id]?.includes(player) ?? true)
+      .map((card) => state.discardOwner[card.id]),
   };
 }
 
@@ -144,6 +151,10 @@ export function discardCard(state: RoundState, player: PlayerId, card: Card): Ro
     discard,
     penalties,
     discardOwner: { ...state.discardOwner, [card.id]: player },
+    cekihAtDiscard: {
+      ...state.cekihAtDiscard,
+      [card.id]: state.cekih.filter((c) => c.target === player).map((c) => c.caller),
+    },
     takenOwners: [],
   };
 

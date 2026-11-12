@@ -121,3 +121,28 @@ test("tutup tangan ditolak kalau seri murni hanya ada dengan meminjam kartu komb
   });
   expect(checkClosed(state, 0, c("KS"))).toBeNull();
 });
+
+test("cekih called after the target's card was discarded is too late and gives no penalty", () => {
+  // C (2) membuang 8H sebelum A (0) mencekih. A baru cekih di gilirannya, lalu tutup dengan 8H: tidak ada hukuman.
+  const s = round({
+    hands: [["2H", "3H", "4H", "9S", "9C", "9D", "8S", "8C"].map(c), [], ["8H", "5C"].map(c), ["KD", "6D"].map(c)],
+    stock: [c("2C"), c("3C")],
+    laidPureSeri: [true, false, false, false],
+    turn: 2,
+    phase: "discard",
+  });
+  const afterC = discardCard(s, 2, c("8H"));
+  const afterD = discardCard({ ...afterC, phase: "discard" }, 3, c("KD"));
+  const late = { ...afterD, cekih: [{ caller: 0 as const, target: 2 as const }] };
+  const picked = pickFromDiscard(late, 0, c("8H"), [c("8S"), c("8C")], []);
+  const closed = discardCard(picked, 0, c("KD"));
+  expect(closed.result?.closedBy).toBe(0);
+  expect(closed.result?.cekihTarget).toBeNull();
+  expect(closed.result?.bonus).toBe(100);
+
+  // Cekih yang sudah aktif sebelum C membuang tetap berlaku.
+  const early = discardCard({ ...s, cekih: [{ caller: 0, target: 2 }] }, 2, c("8H"));
+  const afterD2 = discardCard({ ...early, phase: "discard" }, 3, c("KD"));
+  const closed2 = discardCard(pickFromDiscard(afterD2, 0, c("8H"), [c("8S"), c("8C")], []), 0, c("KD"));
+  expect(closed2.result?.cekihTarget).toBe(2);
+});

@@ -52,11 +52,11 @@ test("bot lays down a pure seri in the discard phase", () => {
 test("bot calls cekih when one card short and the seri is already laid", () => {
   const s = round({
     hands: [["2H", "3H", "4H", "9S", "9C", "9D", "8H", "8S"].map(c), [], [], []],
-    phase: "discard",
-    drewFrom: "stock",
+    phase: "draw",
     laidPureSeri: [true, false, false, false],
   });
-  expect(chooseBotPlay(s, 0)).toEqual({ type: "cekih", target: 3 });
+  // Butuh satu 8 yang tertimpa buangan pemain sebelumnya: cekih ke pemain sebelum sebelumnya.
+  expect(chooseBotPlay(s, 0)).toEqual({ type: "cekih", target: 2 });
 });
 
 test("bot discards the highest non-joker leftover when it cannot close", () => {

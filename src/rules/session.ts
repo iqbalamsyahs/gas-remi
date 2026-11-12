@@ -31,10 +31,13 @@ export function nextFirstPlayer(totals: number[]): PlayerId {
   return best as PlayerId;
 }
 
+// Skor minimal supaya pemain yang tersalip direset ke 0.
+const OVERTAKE_RESET_MIN = 100;
+
 // Tersalip: sebelumnya lebih tinggi dari pemain lain, sekarang lebih rendah.
-// Skor minus tidak direset.
+// Hanya direset kalau skornya (setelah ronde) minimal 100. Di bawah itu, termasuk minus, tidak direset.
 function wasOvertaken(before: number[], after: number[], seat: number): boolean {
-  if (after[seat] < 0) return false;
+  if (after[seat] < OVERTAKE_RESET_MIN) return false;
   return before.some((other, otherSeat) => otherSeat !== seat && before[seat] > other && after[seat] < after[otherSeat]);
 }
 

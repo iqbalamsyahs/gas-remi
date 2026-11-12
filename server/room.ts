@@ -146,6 +146,8 @@ export interface RoomSnapshot {
   botDueAt: number | null;
   // Opsional: snapshot lama belum punya field ini.
   handoverUntil?: (number | null)[];
+  // Opsional: snapshot lama belum punya field ini.
+  leftBy?: (string | null)[];
 }
 
 // Papan ronde yang sedang berjalan, atau fase pembukaan (jika ronde belum mulai main).
@@ -184,6 +186,8 @@ export class Room {
   handoverUntil: (number | null)[] = [null, null, null, null];
   // Per kursi: sejak kapan pemain manusia terputus. Lewat batas waktu, kursinya diambil alih bot (atau dikosongkan saat menunggu).
   offlineSince: (number | null)[] = [null, null, null, null];
+  // Per kursi bot: user yang terakhir duduk di sana sebelum diambil alih bot. Dia boleh kembali selama kursinya masih bot.
+  leftBy: (string | null)[] = [null, null, null, null];
 
   private readonly rng: () => number;
   private readonly now: () => number;
@@ -227,6 +231,7 @@ export class Room {
     room.profiles = snapshot.profiles ?? [null, null, null, null];
     room.handoverUntil = snapshot.handoverUntil ?? [null, null, null, null];
     room.offlineSince = snapshot.offlineSince ?? [null, null, null, null];
+    room.leftBy = snapshot.leftBy ?? [null, null, null, null];
     // Snapshot lama yang sedang dijeda hanya menyimpan waktu jeda untuk satu kursi.
     if (snapshot.offlineSince === undefined && snapshot.status === "paused" && snapshot.pausedSeat !== null) {
       room.offlineSince[snapshot.pausedSeat] = snapshot.pausedAt ?? room.now();
@@ -254,6 +259,7 @@ export class Room {
       profiles: [...this.profiles],
       handoverUntil: [...this.handoverUntil],
       offlineSince: [...this.offlineSince],
+      leftBy: [...this.leftBy],
     };
   }
 
@@ -462,6 +468,8 @@ export class Room {
       ),
       pickedFromDiscard: [false, false, false, false],
       takenOwners: [],
+      // Buangan pembukaan dibuang sebelum ada cekih, jadi tidak bisa memicu hukuman cekih.
+      cekihAtDiscard: Object.fromEntries(this.opening!.discard.cards.map((card) => [card.id, []])),
     };
     this.opening = null;
     this.status = "playing";
@@ -618,11 +626,19 @@ export class Room {
     const seat = wanted === undefined ? this.openSeat() : this.isOpen(wanted) ? (wanted as PlayerId) : null;
     if (seat === null) throw new Error("NO_SEAT");
     this.seats[seat] = userId;
+    this.leftBy[seat] = null;
     this.handoverUntil[seat] = null;
     this.offlineSince[seat] = null;
     this.becomeOpeningIfFull();
     this.scheduleBot();
     return seat;
+  }
+
+  // Pemain yang tadi keluar/putus kembali ke kursinya, selama kursi itu masih dipegang bot.
+  reclaim(userId: string): PlayerId | null {
+    const seat = this.leftBy.indexOf(userId);
+    if (seat === -1 || !this.isOpen(seat) || !this.seats[seat].startsWith(BOT_PREFIX)) return null;
+    return this.sit(userId, seat);
   }
 
   canSit(): boolean {
@@ -678,6 +694,7 @@ export class Room {
   }
 
   private toBot(seat: PlayerId): void {
+    this.leftBy[seat] = this.seats[seat];
     this.seats[seat] = `${BOT_PREFIX}${seat + 1}`;
     this.profiles[seat] = null;
     this.handoverUntil[seat] = this.now() + HANDOVER_MS;
