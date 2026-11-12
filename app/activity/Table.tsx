@@ -473,7 +473,8 @@ export function Table({ view, error, onIntent }: TableProps) {
   const canPickup = drawPhase && playable && pickupTarget !== null && selected.length >= 2 && handLeftAfterPickup >= 1;
   // Alasan tombol aksi yang sedang tidak bisa dipakai, supaya pemain tahu apa yang kurang.
   const laidThisRound = board !== null && view.you !== null && board.laidPureSeri[view.you];
-  const actionHint = !playable
+  // Petunjuk cekih ikut di baris status (bukan baris sendiri), supaya dok tidak makin tinggi.
+  const actionHint = (!playable
     ? null
     : drawPhase && pickupTarget !== null && !canPickup
       ? selected.length < 2
@@ -483,7 +484,8 @@ export function Table({ view, error, onIntent }: TableProps) {
         ? selected.length < 3
           ? "Seri murni minimal 3 kartu."
           : "Tangan akan kosong setelah menurunkan. Sisakan satu kartu untuk dibuang."
-        : null;
+        : null) ??
+    (cekihReady && allowedTargets.length > 0 ? `Tinggal satu kartu lagi, diharapkan dari ${nameOf(allowedTargets[0])}.` : null);
 
   // Kartu terpilih dari sampah bisa dijadikan kombinasi baru kalau sah.
   const selectedLeftover = leftoverCards.filter((card) => selected.includes(card.id));
@@ -564,9 +566,6 @@ export function Table({ view, error, onIntent }: TableProps) {
                   Batalkan cekih ke {nameOf(c.target)}
                 </button>
               ))}
-              {cekihReady && allowedTargets.length > 0 && (
-                <span className={styles.hint}>Kamu tinggal butuh satu kartu lagi. Kartu itu diharapkan dari {nameOf(allowedTargets[0])}.</span>
-              )}
             </>
           )}
         </section>
@@ -779,13 +778,14 @@ export function Table({ view, error, onIntent }: TableProps) {
                 {actionHint && <span className={styles.hintInline}>{actionHint}</span>}
               </span>
             )}
+            {/* Kombinasi yang diturunkan di baris kepala dok, bukan baris sendiri, supaya meja tidak tergencet. */}
+            {board && view.you !== null && board.table[view.you].length > 0 && !scoringPhase && (
+              <div className={styles.myMelds} aria-label="Kombinasi yang kamu turunkan">
+                <Melds melds={board.table[view.you]} jokerRank={board.jokerRank} />
+              </div>
+            )}
             {actions}
             {!(scoringPhase && !myConfirmed) && <span className={styles.dockDeck}>{deck}</span>}
-          </div>
-        )}
-        {!spectator && board && view.you !== null && board.table[view.you].length > 0 && !scoringPhase && (
-          <div className={styles.myMelds} aria-label="Kombinasi yang kamu turunkan">
-            <Melds melds={board.table[view.you]} jokerRank={board.jokerRank} />
           </div>
         )}
 

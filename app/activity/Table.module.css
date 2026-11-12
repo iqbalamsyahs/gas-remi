@@ -225,6 +225,13 @@
   gap: 12px;
 }
 
+/* Kursi samping dengan banyak kombinasi di-scroll di dalam kotaknya, tidak menimpa dok. */
+.left,
+.right {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
 .left {
   grid-area: left;
 }
@@ -476,12 +483,15 @@
 
 /* ---------- Tengah meja ---------- */
 
+/* Buangan yang panjang di-scroll di kolomnya sendiri, jadi cangkulan di sebelahnya tidak ikut bergeser. */
 .middle {
   display: flex;
   justify-content: center;
   align-items: flex-start;
   gap: 22px;
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .pile,
@@ -492,16 +502,16 @@
   gap: 8px;
 }
 
-/* Cangkulan tetap terlihat saat buangan panjang dan meja di-scroll. */
 .pile {
   align-items: center;
-  position: sticky;
-  top: 0;
 }
 
 .discard {
   flex: 0 1 auto;
   min-width: 0;
+  /* Setinggi .middle (bukan max-height %, yang tidak berlaku di flex item tanpa tinggi pasti). */
+  align-self: stretch;
+  overflow-y: auto;
 }
 
 .row {
