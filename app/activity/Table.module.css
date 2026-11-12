@@ -225,6 +225,8 @@
 .right {
   max-height: 100%;
   overflow-y: auto;
+  /* Overflow memotong yang keluar kotak: beri ruang untuk label "giliran" (top: -9px) dan cahaya kursi aktif. */
+  padding: 14px 10px 10px;
 }
 
 .left {
@@ -269,6 +271,21 @@
 
 .seatMelds .row {
   justify-content: center;
+}
+
+/* Kursi atas (desktop): kombinasi di samping nama, bukan di bawahnya, supaya meja tidak kehilangan tinggi. */
+@media (min-width: 601px) {
+  .top .seatBox {
+    display: grid;
+    grid-template-columns: auto;
+    align-items: center;
+    column-gap: 14px;
+  }
+
+  .top .seatMelds {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
 }
 
 /* Tikar pandan di bawah lampu: alas kartu yang jelas batasnya, anyaman halus, pinggiran dijahit. */
@@ -575,8 +592,8 @@
 
 .deck {
   position: relative;
-  width: 66px;
-  height: 94px;
+  width: 52px;
+  height: 76px;
   border: 3px solid var(--kertas);
   border-radius: 8px;
   box-shadow: 3px 3px 0 #15403e, 6px 6px 0 #0f302e, 0 10px 18px rgb(0 0 0 / 0.4);
@@ -634,11 +651,13 @@
 
 /* ---------- Kartu ---------- */
 
+/* Satu ukuran untuk kartu tangan dan kartu di meja (buangan), dikecilkan supaya meja dapat lebih banyak tinggi. */
 .card {
   position: relative;
-  min-width: 60px;
-  min-height: 88px;
-  padding: 6px;
+  min-width: 52px;
+  min-height: 76px;
+  padding: 5px;
+  font-size: 0.9rem;
   border: none;
   border-radius: 8px;
   background: var(--kertas);
@@ -1565,6 +1584,11 @@
     align-self: stretch;
     justify-content: center;
     margin-bottom: 12px;
+  }
+
+  .left,
+  .right {
+    padding: 12px 2px 4px;
   }
 
   .seatBox {
