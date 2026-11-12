@@ -114,7 +114,7 @@ Ronde berakhir dengan salah satu dari dua cara: ada pemain yang closed, atau can
 | --- | --- |
 | Mengambil dari cangkulan | +250 |
 | Mengambil dari cangkulan, kartu penutupnya joker | +500 (tanpa penalti buang joker) |
-| Pernah mengambil dari buangan (tutup biasa) | +10× nilai kartu penutup. Jika cekih cocok, bonus ini menjadi bonus cekih (tidak ditambah) |
+| Pernah mengambil dari buangan (tutup biasa) | +10× nilai kartu penutup, atau +250 jika kartu penutupnya joker. Jika cekih cocok, bonus ini menjadi bonus cekih (tidak ditambah) |
 
 **Cekih**
 
@@ -123,7 +123,7 @@ Ronde berakhir dengan salah satu dari dua cara: ada pemain yang closed, atau can
   - Kalau kartu yang kurang dibuang pemain sebelum sebelumnya, dan pemain sebelumnya membuang kartu sampah di atasnya (sebagai penutup), cekih ke pemain sebelum sebelumnya.
   - Kalau kartu yang kurang dibuang pemain sebelumnya langsung, cekih ke pemain sebelumnya.
 - Cekih hanya memberi bonus dan hukuman jika penutupan adalah tutup biasa (pernah mengambil dari buangan) dan kartu buangan yang dipakai membentuk kombinasi pada giliran penutupan (kartu yang dituju, atau kartu di atasnya yang ikut kombinasi) adalah kartu yang dibuang pemain tercekih. Kartu di atasnya yang hanya masuk tangan tidak dihitung.
-- Pemain penutup mendapat +10× nilai kartu penutup. Pemain tercekih mendapat −10× nilai kartu penutup.
+- Pemain penutup mendapat +10× nilai kartu penutup. Pemain tercekih mendapat −10× nilai kartu penutup. Jika kartu penutupnya joker, keduanya menjadi +250 dan −250.
 - Hanya cekih milik pemain penutup yang dihitung.
 
 **Cangkulan habis**

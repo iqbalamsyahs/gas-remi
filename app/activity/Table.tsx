@@ -484,7 +484,9 @@ export function Table({ view, error, onIntent }: TableProps) {
         ? selected.length < 3
           ? "Seri murni minimal 3 kartu."
           : "Tangan akan kosong setelah menurunkan. Sisakan satu kartu untuk dibuang."
-        : null) ??
+        : drawPhase && !inOpening && pickupTarget === null
+          ? "Kartu buangan bertanda kuning bisa diambil."
+          : null) ??
     (cekihReady && allowedTargets.length > 0 ? `Tinggal satu kartu lagi, diharapkan dari ${nameOf(allowedTargets[0])}.` : null);
 
   // Kartu terpilih dari sampah bisa dijadikan kombinasi baru kalau sah.
@@ -714,9 +716,6 @@ export function Table({ view, error, onIntent }: TableProps) {
 
             <div className={styles.discard}>
               <div className={styles.label}>Buangan</div>
-              {playable && drawPhase && pickupTarget === null && (
-                <div className={styles.label}>Kartu bertanda kuning bisa diambil.</div>
-              )}
               {pickupTarget !== null && (
                 <div className={styles.label}>Kartu di atas target boleh ikut dibentuk jadi kombinasi. Klik untuk memilih.</div>
               )}
@@ -791,12 +790,12 @@ export function Table({ view, error, onIntent }: TableProps) {
 
         {spectator ? null : scoringPhase && !myConfirmed ? (
           <section className={styles.hand}>
-            <div className={styles.label}>Kombinasimu (kartu yang tidak masuk kombinasi dihitung minus)</div>
-            {view.scorePreview && (
-              <p className={styles.notice}>
-                Perkiraan skor: {view.seats.map((_, seat) => `${nameOf(seat)} ${signed(view.scorePreview![seat])}`).join(" · ")}
-              </p>
-            )}
+            {/* Satu baris ringkas: petunjuk dan perkiraan skor, supaya dok tidak terlalu tinggi. */}
+            <div className={styles.label}>
+              Susun kombinasimu (sampah dihitung minus).
+              {view.scorePreview &&
+                ` Perkiraan: ${view.seats.map((_, seat) => `${nameOf(seat)} ${signed(view.scorePreview![seat])}`).join(" · ")}`}
+            </div>
             {groups.map((group, index) => (
               <div key={index} className={styles.row}>
                 {group.map((id) => {

@@ -146,3 +146,17 @@ test("cekih called after the target's card was discarded is too late and gives n
   const closed2 = discardCard(pickFromDiscard(afterD2, 0, c("8H"), [c("8S"), c("8C")], []), 0, c("KD"));
   expect(closed2.result?.cekihTarget).toBe(2);
 });
+
+test("closing with a joker after a pickup gives 250, and a matching cekih makes it +250 / -250", () => {
+  // Joker = K. A mengambil 8H (milik C) dengan 8S 8C, lalu menutup dengan KD (joker).
+  const s = { ...closingRound(), jokerRank: "K" as Rank };
+  const closed = discardCard(pickFromDiscard(s, 0, c("8H"), [c("8S"), c("8C")], []), 0, c("KD"));
+  expect(closed.result?.bonus).toBe(250);
+  expect(closed.result?.cekihTarget).toBe(2);
+  expect(closed.result?.cekihPenalty).toBe(-250);
+
+  const noCekih = { ...s, cekih: [] };
+  const plain = discardCard(pickFromDiscard(noCekih, 0, c("8H"), [c("8S"), c("8C")], []), 0, c("KD"));
+  expect(plain.result?.bonus).toBe(250);
+  expect(plain.result?.cekihPenalty).toBe(0);
+});
