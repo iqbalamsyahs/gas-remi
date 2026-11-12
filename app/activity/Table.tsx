@@ -492,6 +492,12 @@ export function Table({ view, error, onIntent }: TableProps) {
   const canGroup = scoringPhase && !myConfirmed && selectedLeftover.length >= 3 &&
     classify(selectedLeftover, jokerRank).kind !== "invalid";
   // Satu baris status di dok bawah: apa yang harus kamu lakukan sekarang, atau giliran siapa.
+  // Cekih aktif ditampilkan di dok, bukan di meja yang bisa di-scroll.
+  const cekihOnMe = board?.cekih.filter((c) => c.target === view.you) ?? [];
+  const cekihLine =
+    board && board.cekih.length > 0
+      ? `Cekih aktif: ${board.cekih.map((c) => `${nameOf(c.caller)} → ${nameOf(c.target)}`).join(", ")}`
+      : null;
   const turnLine = playable
     ? inOpening
       ? view.hand.length === 8
@@ -679,18 +685,8 @@ export function Table({ view, error, onIntent }: TableProps) {
               </p>
             )}
             {error && <p className={styles.error}>{error}</p>}
-            {board && board.cekih.length > 0 && (
-              <p className={styles.notice}>
-                Cekih aktif: {board.cekih.map((c) => `${nameOf(c.caller)} → ${nameOf(c.target)}`).join(", ")}
-              </p>
-            )}
-            {board?.cekih
-              .filter((c) => c.target === view.you)
-              .map((c) => (
-                <p key={`${c.caller}-${c.target}`} className={`${styles.notice} ${styles.cekihAlert}`}>
-                  {nameOf(c.caller)} menyebut cekih ke kamu.
-                </p>
-              ))}
+            {/* Pemain melihat cekih di dok (selalu terlihat). Penonton tidak punya dok, jadi di meja. */}
+            {spectator && cekihLine && <p className={styles.notice}>{cekihLine}</p>}
           </div>
           {view.status === "waiting" && (
             <section className={styles.targetCard}>
@@ -772,10 +768,14 @@ export function Table({ view, error, onIntent }: TableProps) {
                 </button>
               )}
             </span>
-            {(turnLine || actionHint) && (
+            {(turnLine || actionHint || cekihLine) && (
               <span className={styles.statusLine}>
                 {turnLine && <span className={playable ? styles.turnLineMine : styles.turnLine}>{turnLine}</span>}
                 {actionHint && <span className={styles.hintInline}>{actionHint}</span>}
+                {cekihOnMe.map((c) => (
+                  <span key={c.caller} className={styles.cekihInline}>{nameOf(c.caller)} menyebut cekih ke kamu.</span>
+                ))}
+                {cekihLine && <span className={styles.hintInline}>{cekihLine}</span>}
               </span>
             )}
             {/* Kombinasi yang diturunkan di baris kepala dok, bukan baris sendiri, supaya meja tidak tergencet. */}

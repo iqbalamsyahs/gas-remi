@@ -196,14 +196,9 @@
   background: rgb(110 30 40 / 0.6);
 }
 
-.cekihAlert {
-  border-left-color: var(--lampu);
-  animation: alertPulse 1.2s ease-in-out 3;
-}
-
 @keyframes alertPulse {
   50% {
-    box-shadow: 0 0 14px 2px rgb(242 179 61 / 0.6);
+    opacity: 0.45;
   }
 }
 
@@ -826,6 +821,14 @@
 .hintInline {
   color: var(--kabut);
   font-size: 0.8rem;
+}
+
+/* Kamu sedang dicekih: menonjol di baris status dok. */
+.cekihInline {
+  color: var(--lampu);
+  font-size: 0.85rem;
+  font-weight: 700;
+  animation: alertPulse 1.2s ease-in-out 3;
 }
 
 .dockHead > .actions {
@@ -1714,7 +1717,7 @@
   .deckReady,
   .closingTag,
   .closingFlip .card,
-  .cekihAlert {
+  .cekihInline {
     animation: none;
   }
 
