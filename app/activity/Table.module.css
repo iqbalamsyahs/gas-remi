@@ -492,8 +492,11 @@
   gap: 8px;
 }
 
+/* Cangkulan tetap terlihat saat buangan panjang dan meja di-scroll. */
 .pile {
   align-items: center;
+  position: sticky;
+  top: 0;
 }
 
 .discard {
